@@ -1,0 +1,6 @@
+# Node tooling (chỉ dùng cho husky + commitlint)
+node_modules/
+
+# .NET (bổ sung đầy đủ ở Ngày 3 / khi abp new)
+bin/
+obj/
