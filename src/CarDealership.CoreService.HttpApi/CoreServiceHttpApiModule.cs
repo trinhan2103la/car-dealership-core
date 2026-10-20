@@ -1,7 +1,5 @@
 ﻿using Localization.Resources.AbpUi;
 using CarDealership.CoreService.Localization;
-using Localization.Resources.AbpUi;
-using CarDealership.CoreService.Localization;
 using Volo.Abp.Identity;
 using Volo.Abp.Localization;
 using Volo.Abp.Modularity;

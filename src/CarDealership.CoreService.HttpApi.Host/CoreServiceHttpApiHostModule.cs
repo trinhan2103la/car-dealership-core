@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using Serilog;
 using CarDealership.CoreService.EntityFrameworkCore;
 using CarDealership.CoreService.MultiTenancy;
 using Volo.Abp;
@@ -36,17 +38,22 @@ public class CoreServiceHttpApiHostModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
 
-        ConfigureConventionalControllers();
+        // Ngày 14: health checks. /health/live không check dependency; /health/ready check DB.
+        context.Services.AddHealthChecks()
+            .AddCheck<CarDealership.CoreService.Health.DatabaseHealthCheck>(
+                "postgresql", tags: new[] { "ready" });
+
+        // Ngày 10: KHÔNG bật auto/conventional API controller (Req 29.5).
+        // Controller được viết tường minh dưới prefix riêng (/api/catalog/*, /api/app/*...).
+        // Và ẩn mọi controller do module ABP tự đăng ký (Identity/Permission/Setting/Abp core)
+        // để /api/identity/*, /api/abp/*... trả 404.
+        Configure<MvcOptions>(options =>
+        {
+            options.Conventions.Add(new HideAbpModuleControllersConvention());
+        });
+
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
-    }
-
-    private void ConfigureConventionalControllers()
-    {
-        Configure<AbpAspNetCoreMvcOptions>(options =>
-        {
-            options.ConventionalControllers.Create(typeof(CoreServiceApplicationModule).Assembly);
-        });
     }
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
@@ -90,7 +97,21 @@ public class CoreServiceHttpApiHostModule : AbpModule
 
         app.UseAbpRequestLocalization();
 
-        app.UseCorrelationId();
+        // Ngày 13: Correlation_Id của ta (validate header, sinh mới nếu sai, đẩy vào LogContext).
+        // Đặt TRƯỚC Serilog request logging để trường Correlation_Id có trong dòng log.
+        app.UseMiddleware<CarDealership.CoreService.Middleware.CorrelationIdMiddleware>();
+        // Ngày 11: một dòng log JSON cho mỗi request HTTP hoàn tất (Req 22.1).
+        // CompactJsonFormatter cho @t (ISO 8601 có offset) và @l (level).
+        // Serilog request logging tự thêm StatusCode, Elapsed (ms); ta thêm path.
+        // service được enrich ở Program.cs; Correlation_Id thêm ở Ngày 13.
+        app.UseSerilogRequestLogging(options =>
+        {
+            options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
+            {
+                diagnosticContext.Set("path", httpContext.Request.Path.Value ?? string.Empty);
+                diagnosticContext.Set("statusCode", httpContext.Response.StatusCode);
+            };
+        });
         app.UseRouting();
         app.UseCors();
         // app.UseAuthentication();  // sẽ bật ở Ngày 37 khi có JWT ES256
@@ -101,6 +122,18 @@ public class CoreServiceHttpApiHostModule : AbpModule
         }
         app.UseUnitOfWork();
         app.UseAuthorization();
+
+        // Ngày 14: health endpoints.
+        // /health/live: process còn sống, không kiểm dependency (predicate loại hết check).
+        app.UseHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+        {
+            Predicate = _ => false
+        });
+        // /health/ready: chạy check có tag "ready" (DB). Lỗi -> 503.
+        app.UseHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+        {
+            Predicate = check => check.Tags.Contains("ready")
+        });
 
         app.UseSwagger();
         app.UseAbpSwaggerUI(c =>

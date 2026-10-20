@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using Serilog.Formatting.Compact;
 
 namespace CarDealership.CoreService;
 
@@ -21,8 +22,11 @@ public class Program
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
-            .WriteTo.Async(c => c.File("Logs/logs.txt"))
-            .WriteTo.Async(c => c.Console())
+            // Ngày 11: log JSON có cấu trúc (CompactJsonFormatter). Service name = core-api.
+            // Correlation_Id được thêm ở Ngày 13 (middleware đẩy vào LogContext).
+            .Enrich.WithProperty("service", "core-api")
+            .WriteTo.Async(c => c.Console(new CompactJsonFormatter()))
+            .WriteTo.Async(c => c.File(new CompactJsonFormatter(), "Logs/logs.json"))
             .CreateLogger();
 
         try
