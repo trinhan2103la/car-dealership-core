@@ -4,7 +4,6 @@ using Volo.Abp;
 using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore.Sqlite;
-using Volo.Abp.FeatureManagement;
 using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement;
 using Volo.Abp.SettingManagement;
@@ -23,11 +22,6 @@ public class CoreServiceEntityFrameworkCoreTestModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        Configure<FeatureManagementOptions>(options =>
-        {
-            options.SaveStaticFeaturesToDatabase = false;
-            options.IsDynamicFeatureStoreEnabled = false;
-        });
         Configure<PermissionManagementOptions>(options =>
         {
             options.SaveStaticPermissionsToDatabase = false;

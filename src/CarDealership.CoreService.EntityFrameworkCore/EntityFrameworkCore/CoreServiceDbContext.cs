@@ -4,38 +4,28 @@ using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.EntityFrameworkCore;
-using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
-using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
-using Volo.Abp.TenantManagement;
-using Volo.Abp.TenantManagement.EntityFrameworkCore;
 
 namespace CarDealership.CoreService.EntityFrameworkCore;
 
 [ReplaceDbContext(typeof(IIdentityDbContext))]
-[ReplaceDbContext(typeof(ITenantManagementDbContext))]
 [ConnectionStringName("Default")]
 public class CoreServiceDbContext :
     AbpDbContext<CoreServiceDbContext>,
-    IIdentityDbContext,
-    ITenantManagementDbContext
+    IIdentityDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
     #region Entities from the modules
 
-    /* Notice: We only implemented IIdentityDbContext and ITenantManagementDbContext
-     * and replaced them for this DbContext. This allows you to perform JOIN
-     * queries for the entities of these modules over the repositories easily. You
-     * typically don't need that for other modules. But, if you need, you can
-     * implement the DbContext interface of the needed module and use ReplaceDbContext
-     * attribute just like IIdentityDbContext and ITenantManagementDbContext.
-     *
-     * More info: Replacing a DbContext of a module ensures that the related module
-     * uses this DbContext on runtime. Otherwise, it will use its own DbContext class.
+    /* Notice: We only implemented IIdentityDbContext and replaced it for this
+     * DbContext. This allows you to perform JOIN queries for the entities of
+     * the Identity module over the repositories easily. If you need the same
+     * for another module, implement that module's DbContext interface and add
+     * a ReplaceDbContext attribute like IIdentityDbContext.
      */
 
     //Identity
@@ -47,9 +37,6 @@ public class CoreServiceDbContext :
     public DbSet<IdentityLinkUser> LinkUsers { get; set; }
     public DbSet<IdentityUserDelegation> UserDelegations { get; set; }
     public DbSet<IdentitySession> Sessions { get; set; }
-    // Tenant Management
-    public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<TenantConnectionString> TenantConnectionStrings { get; set; }
 
     #endregion
 
@@ -70,9 +57,6 @@ public class CoreServiceDbContext :
         builder.ConfigureBackgroundJobs();
         builder.ConfigureAuditLogging();
         builder.ConfigureIdentity();
-        builder.ConfigureOpenIddict();
-        builder.ConfigureFeatureManagement();
-        builder.ConfigureTenantManagement();
 
         /* Configure your own tables/entities inside here */
 

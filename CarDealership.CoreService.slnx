@@ -15,8 +15,6 @@
     <Project Path="src/CarDealership.CoreService.Domain.Shared/CarDealership.CoreService.Domain.Shared.csproj" />
     <Project Path="src/CarDealership.CoreService.Domain/CarDealership.CoreService.Domain.csproj" />
     <Project Path="src/CarDealership.CoreService.EntityFrameworkCore/CarDealership.CoreService.EntityFrameworkCore.csproj" />
-    <Project Path="src/CarDealership.CoreService.HttpApi.Client/CarDealership.CoreService.HttpApi.Client.csproj" />
-    
     <Project Path="src/CarDealership.CoreService.HttpApi.Host/CarDealership.CoreService.HttpApi.Host.csproj" />
     <Project Path="src/CarDealership.CoreService.HttpApi/CarDealership.CoreService.HttpApi.csproj" />
     
@@ -27,8 +25,6 @@
     <Project Path="test/CarDealership.CoreService.Application.Tests/CarDealership.CoreService.Application.Tests.csproj" />
     <Project Path="test/CarDealership.CoreService.Domain.Tests/CarDealership.CoreService.Domain.Tests.csproj" />
     <Project Path="test/CarDealership.CoreService.EntityFrameworkCore.Tests/CarDealership.CoreService.EntityFrameworkCore.Tests.csproj" />
-    <Project Path="test/CarDealership.CoreService.HttpApi.Client.ConsoleTestApp/CarDealership.CoreService.HttpApi.Client.ConsoleTestApp.csproj" />
-    
     <Project Path="test/CarDealership.CoreService.TestBase/CarDealership.CoreService.TestBase.csproj" />
     
   </Folder>

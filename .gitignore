@@ -283,3 +283,6 @@ src/CarDealership.CoreService.Blazor.Server.Tiered/Logs/*
 
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
+
+# Log files sinh khi chạy (DbMigrator, Host...)
+Logs/

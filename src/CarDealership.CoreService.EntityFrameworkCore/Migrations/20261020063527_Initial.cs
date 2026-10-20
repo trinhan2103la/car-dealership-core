@@ -105,57 +105,6 @@ namespace CarDealership.CoreService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AbpFeatureGroups",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    DisplayName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AbpFeatureGroups", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AbpFeatures",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    GroupName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    ParentName = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
-                    DisplayName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    Description = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    DefaultValue = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    IsVisibleToClients = table.Column<bool>(type: "boolean", nullable: false),
-                    IsAvailableToHost = table.Column<bool>(type: "boolean", nullable: false),
-                    AllowedProviders = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    ValueType = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: true),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AbpFeatures", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AbpFeatureValues",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    Value = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
-                    ProviderName = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    ProviderKey = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AbpFeatureValues", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AbpLinkUsers",
                 columns: table => new
                 {
@@ -371,29 +320,6 @@ namespace CarDealership.CoreService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AbpTenants",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    NormalizedName = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    EntityVersion = table.Column<int>(type: "integer", nullable: false),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: false),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
-                    CreationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    LastModificationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    DeleterId = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletionTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AbpTenants", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AbpUserDelegations",
                 columns: table => new
                 {
@@ -450,70 +376,6 @@ namespace CarDealership.CoreService.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AbpUsers", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OpenIddictApplications",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ApplicationType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ClientId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    ClientSecret = table.Column<string>(type: "text", nullable: true),
-                    ClientType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ConsentType = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    DisplayName = table.Column<string>(type: "text", nullable: true),
-                    DisplayNames = table.Column<string>(type: "text", nullable: true),
-                    JsonWebKeySet = table.Column<string>(type: "text", nullable: true),
-                    Permissions = table.Column<string>(type: "text", nullable: true),
-                    PostLogoutRedirectUris = table.Column<string>(type: "text", nullable: true),
-                    Properties = table.Column<string>(type: "text", nullable: true),
-                    RedirectUris = table.Column<string>(type: "text", nullable: true),
-                    Requirements = table.Column<string>(type: "text", nullable: true),
-                    Settings = table.Column<string>(type: "text", nullable: true),
-                    FrontChannelLogoutUri = table.Column<string>(type: "text", nullable: true),
-                    ClientUri = table.Column<string>(type: "text", nullable: true),
-                    LogoUri = table.Column<string>(type: "text", nullable: true),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: false),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
-                    CreationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    LastModificationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    DeleterId = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletionTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OpenIddictApplications", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OpenIddictScopes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    Descriptions = table.Column<string>(type: "text", nullable: true),
-                    DisplayName = table.Column<string>(type: "text", nullable: true),
-                    DisplayNames = table.Column<string>(type: "text", nullable: true),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Properties = table.Column<string>(type: "text", nullable: true),
-                    Resources = table.Column<string>(type: "text", nullable: true),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: false),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false),
-                    CreationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    CreatorId = table.Column<Guid>(type: "uuid", nullable: true),
-                    LastModificationTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    LastModifierId = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
-                    DeleterId = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletionTime = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OpenIddictScopes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -610,25 +472,6 @@ namespace CarDealership.CoreService.Migrations
                         name: "FK_AbpRoleClaims_AbpRoles_RoleId",
                         column: x => x.RoleId,
                         principalTable: "AbpRoles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AbpTenantConnectionStrings",
-                columns: table => new
-                {
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    Value = table.Column<string>(type: "character varying(1024)", maxLength: 1024, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AbpTenantConnectionStrings", x => new { x.TenantId, x.Name });
-                    table.ForeignKey(
-                        name: "FK_AbpTenantConnectionStrings_AbpTenants_TenantId",
-                        column: x => x.TenantId,
-                        principalTable: "AbpTenants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -789,31 +632,6 @@ namespace CarDealership.CoreService.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "OpenIddictAuthorizations",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ApplicationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreationDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    Properties = table.Column<string>(type: "text", nullable: true),
-                    Scopes = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Subject = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    Type = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: false),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OpenIddictAuthorizations", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_OpenIddictAuthorizations_OpenIddictApplications_Application~",
-                        column: x => x.ApplicationId,
-                        principalTable: "OpenIddictApplications",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AbpEntityPropertyChanges",
                 columns: table => new
                 {
@@ -834,40 +652,6 @@ namespace CarDealership.CoreService.Migrations
                         principalTable: "AbpEntityChanges",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OpenIddictTokens",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ApplicationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    AuthorizationId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreationDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    ExpirationDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    Payload = table.Column<string>(type: "text", nullable: true),
-                    Properties = table.Column<string>(type: "text", nullable: true),
-                    RedemptionDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    ReferenceId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Status = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Subject = table.Column<string>(type: "character varying(400)", maxLength: 400, nullable: true),
-                    Type = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
-                    ExtraProperties = table.Column<string>(type: "text", nullable: false),
-                    ConcurrencyStamp = table.Column<string>(type: "character varying(40)", maxLength: 40, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OpenIddictTokens", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_OpenIddictTokens_OpenIddictApplications_ApplicationId",
-                        column: x => x.ApplicationId,
-                        principalTable: "OpenIddictApplications",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_OpenIddictTokens_OpenIddictAuthorizations_AuthorizationId",
-                        column: x => x.AuthorizationId,
-                        principalTable: "OpenIddictAuthorizations",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
@@ -909,29 +693,6 @@ namespace CarDealership.CoreService.Migrations
                 name: "IX_AbpEntityPropertyChanges_EntityChangeId",
                 table: "AbpEntityPropertyChanges",
                 column: "EntityChangeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AbpFeatureGroups_Name",
-                table: "AbpFeatureGroups",
-                column: "Name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AbpFeatures_GroupName",
-                table: "AbpFeatures",
-                column: "GroupName");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AbpFeatures_Name",
-                table: "AbpFeatures",
-                column: "Name",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AbpFeatureValues_Name_ProviderName_ProviderKey",
-                table: "AbpFeatureValues",
-                columns: new[] { "Name", "ProviderName", "ProviderKey" },
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AbpLinkUsers_SourceUserId_SourceTenantId_TargetUserId_Targe~",
@@ -1041,16 +802,6 @@ namespace CarDealership.CoreService.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_AbpTenants_Name",
-                table: "AbpTenants",
-                column: "Name");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AbpTenants_NormalizedName",
-                table: "AbpTenants",
-                column: "NormalizedName");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AbpUserClaims_UserId",
                 table: "AbpUserClaims",
                 column: "UserId");
@@ -1094,36 +845,6 @@ namespace CarDealership.CoreService.Migrations
                 name: "IX_AbpUsers_UserName",
                 table: "AbpUsers",
                 column: "UserName");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictApplications_ClientId",
-                table: "OpenIddictApplications",
-                column: "ClientId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictAuthorizations_ApplicationId_Status_Subject_Type",
-                table: "OpenIddictAuthorizations",
-                columns: new[] { "ApplicationId", "Status", "Subject", "Type" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictScopes_Name",
-                table: "OpenIddictScopes",
-                column: "Name");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictTokens_ApplicationId_Status_Subject_Type",
-                table: "OpenIddictTokens",
-                columns: new[] { "ApplicationId", "Status", "Subject", "Type" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictTokens_AuthorizationId",
-                table: "OpenIddictTokens",
-                column: "AuthorizationId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OpenIddictTokens_ReferenceId",
-                table: "OpenIddictTokens",
-                column: "ReferenceId");
         }
 
         /// <inheritdoc />
@@ -1143,15 +864,6 @@ namespace CarDealership.CoreService.Migrations
 
             migrationBuilder.DropTable(
                 name: "AbpEntityPropertyChanges");
-
-            migrationBuilder.DropTable(
-                name: "AbpFeatureGroups");
-
-            migrationBuilder.DropTable(
-                name: "AbpFeatures");
-
-            migrationBuilder.DropTable(
-                name: "AbpFeatureValues");
 
             migrationBuilder.DropTable(
                 name: "AbpLinkUsers");
@@ -1187,9 +899,6 @@ namespace CarDealership.CoreService.Migrations
                 name: "AbpSettings");
 
             migrationBuilder.DropTable(
-                name: "AbpTenantConnectionStrings");
-
-            migrationBuilder.DropTable(
                 name: "AbpUserClaims");
 
             migrationBuilder.DropTable(
@@ -1214,16 +923,7 @@ namespace CarDealership.CoreService.Migrations
                 name: "AbpUserTokens");
 
             migrationBuilder.DropTable(
-                name: "OpenIddictScopes");
-
-            migrationBuilder.DropTable(
-                name: "OpenIddictTokens");
-
-            migrationBuilder.DropTable(
                 name: "AbpEntityChanges");
-
-            migrationBuilder.DropTable(
-                name: "AbpTenants");
 
             migrationBuilder.DropTable(
                 name: "AbpOrganizationUnits");
@@ -1235,13 +935,7 @@ namespace CarDealership.CoreService.Migrations
                 name: "AbpUsers");
 
             migrationBuilder.DropTable(
-                name: "OpenIddictAuthorizations");
-
-            migrationBuilder.DropTable(
                 name: "AbpAuditLogs");
-
-            migrationBuilder.DropTable(
-                name: "OpenIddictApplications");
         }
     }
 }

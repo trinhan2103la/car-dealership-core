@@ -10,8 +10,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Identity;
-using Volo.Abp.MultiTenancy;
-using Volo.Abp.TenantManagement;
 
 namespace CarDealership.CoreService.Data;
 
@@ -21,19 +19,13 @@ public class CoreServiceDbMigrationService : ITransientDependency
 
     private readonly IDataSeeder _dataSeeder;
     private readonly IEnumerable<ICoreServiceDbSchemaMigrator> _dbSchemaMigrators;
-    private readonly ITenantRepository _tenantRepository;
-    private readonly ICurrentTenant _currentTenant;
 
     public CoreServiceDbMigrationService(
         IDataSeeder dataSeeder,
-        IEnumerable<ICoreServiceDbSchemaMigrator> dbSchemaMigrators,
-        ITenantRepository tenantRepository,
-        ICurrentTenant currentTenant)
+        IEnumerable<ICoreServiceDbSchemaMigrator> dbSchemaMigrators)
     {
         _dataSeeder = dataSeeder;
         _dbSchemaMigrators = dbSchemaMigrators;
-        _tenantRepository = tenantRepository;
-        _currentTenant = currentTenant;
 
         Logger = NullLogger<CoreServiceDbMigrationService>.Instance;
     }
@@ -52,43 +44,13 @@ public class CoreServiceDbMigrationService : ITransientDependency
         await MigrateDatabaseSchemaAsync();
         await SeedDataAsync();
 
-        Logger.LogInformation($"Successfully completed host database migrations.");
-
-        var tenants = await _tenantRepository.GetListAsync(includeDetails: true);
-
-        var migratedDatabaseSchemas = new HashSet<string>();
-        foreach (var tenant in tenants)
-        {
-            using (_currentTenant.Change(tenant.Id))
-            {
-                if (tenant.ConnectionStrings.Any())
-                {
-                    var tenantConnectionStrings = tenant.ConnectionStrings
-                        .Select(x => x.Value)
-                        .ToList();
-
-                    if (!migratedDatabaseSchemas.IsSupersetOf(tenantConnectionStrings))
-                    {
-                        await MigrateDatabaseSchemaAsync(tenant);
-
-                        migratedDatabaseSchemas.AddIfNotContains(tenantConnectionStrings);
-                    }
-                }
-
-                await SeedDataAsync(tenant);
-            }
-
-            Logger.LogInformation($"Successfully completed {tenant.Name} tenant database migrations.");
-        }
-
-        Logger.LogInformation("Successfully completed all database migrations.");
+        Logger.LogInformation("Successfully completed host database migrations.");
         Logger.LogInformation("You can safely end this process...");
     }
 
-    private async Task MigrateDatabaseSchemaAsync(Tenant? tenant = null)
+    private async Task MigrateDatabaseSchemaAsync()
     {
-        Logger.LogInformation(
-            $"Migrating schema for {(tenant == null ? "host" : tenant.Name + " tenant")} database...");
+        Logger.LogInformation("Migrating schema for host database...");
 
         foreach (var migrator in _dbSchemaMigrators)
         {
@@ -96,11 +58,11 @@ public class CoreServiceDbMigrationService : ITransientDependency
         }
     }
 
-    private async Task SeedDataAsync(Tenant? tenant = null)
+    private async Task SeedDataAsync()
     {
-        Logger.LogInformation($"Executing {(tenant == null ? "host" : tenant.Name + " tenant")} database seed...");
+        Logger.LogInformation("Executing host database seed...");
 
-        await _dataSeeder.SeedAsync(new DataSeedContext(tenant?.Id)
+        await _dataSeeder.SeedAsync(new DataSeedContext()
             .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName, IdentityDataSeedContributor.AdminEmailDefaultValue)
             .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, IdentityDataSeedContributor.AdminPasswordDefaultValue)
         );
@@ -207,7 +169,7 @@ public class CoreServiceDbMigrationService : ITransientDependency
         {
             currentDirectory = Directory.GetParent(currentDirectory.FullName);
 
-            if (currentDirectory != null && Directory.GetFiles(currentDirectory.FullName).FirstOrDefault(f => f.EndsWith(".sln")) != null)
+            if (currentDirectory != null && Directory.GetFiles(currentDirectory.FullName).FirstOrDefault(f => f.EndsWith(".sln") || f.EndsWith(".slnx")) != null)
             {
                 return currentDirectory.FullName;
             }
