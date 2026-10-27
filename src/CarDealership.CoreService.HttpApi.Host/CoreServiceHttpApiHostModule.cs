@@ -95,10 +95,8 @@ public class CoreServiceHttpApiHostModule : AbpModule
             app.UseDeveloperExceptionPage();
         }
 
-        app.UseAbpRequestLocalization();
-
         // Ngày 13: Correlation_Id của ta (validate header, sinh mới nếu sai, đẩy vào LogContext).
-        // Đặt TRƯỚC Serilog request logging để trường Correlation_Id có trong dòng log.
+        // Đặt ĐẦU pipeline để mọi dòng log (kể cả /health/live) đều có Correlation_Id.
         app.UseMiddleware<CarDealership.CoreService.Middleware.CorrelationIdMiddleware>();
         // Ngày 11: một dòng log JSON cho mỗi request HTTP hoàn tất (Req 22.1).
         // CompactJsonFormatter cho @t (ISO 8601 có offset) và @l (level).
@@ -108,10 +106,25 @@ public class CoreServiceHttpApiHostModule : AbpModule
         {
             options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
             {
-                diagnosticContext.Set("path", httpContext.Request.Path.Value ?? string.Empty);
+                // Ngày 11: che query nhạy cảm (token/password...) trước khi log; giữ path.
+                var pathAndQuery = httpContext.Request.Path.Value + httpContext.Request.QueryString.Value;
+                diagnosticContext.Set("path", CarDealership.CoreService.Logging.LogRedaction.RedactPathAndQuery(pathAndQuery));
                 diagnosticContext.Set("statusCode", httpContext.Response.StatusCode);
+                // Lưu ý: KHÔNG set Authorization/Cookie/X-Edge-Key vào log (xem LogRedaction.IsSensitiveHeader).
             };
         });
+
+        // Ngày 14 (sửa): /health/live phải ĐỘC LẬP DB. Đặt TRƯỚC UseAbpRequestLocalization()
+        // vì localization đọc Setting từ Postgres; nếu đặt sau, DB sập sẽ khiến /health/live 500.
+        // predicate loại hết check -> chỉ xác nhận process còn sống, trả 200 body rỗng.
+        app.UseHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+        {
+            Predicate = _ => false,
+            // Ngày 14: body rỗng (mặc định health checks ghi "Healthy"). Chỉ cần 200.
+            ResponseWriter = (context, _) => System.Threading.Tasks.Task.CompletedTask
+        });
+
+        app.UseAbpRequestLocalization();
         app.UseRouting();
         app.UseCors();
         // app.UseAuthentication();  // sẽ bật ở Ngày 37 khi có JWT ES256
@@ -123,13 +136,8 @@ public class CoreServiceHttpApiHostModule : AbpModule
         app.UseUnitOfWork();
         app.UseAuthorization();
 
-        // Ngày 14: health endpoints.
-        // /health/live: process còn sống, không kiểm dependency (predicate loại hết check).
-        app.UseHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-        {
-            Predicate = _ => false
-        });
-        // /health/ready: chạy check có tag "ready" (DB). Lỗi -> 503.
+        // Ngày 14: /health/ready kiểm DB (check có tag "ready"). Lỗi -> 503.
+        // Đặt sau UoW để DbContext/UnitOfWork sẵn sàng cho DatabaseHealthCheck.
         app.UseHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("ready")

@@ -25,6 +25,11 @@ public class Program
             // Ngày 11: log JSON có cấu trúc (CompactJsonFormatter). Service name = core-api.
             // Correlation_Id được thêm ở Ngày 13 (middleware đẩy vào LogContext).
             .Enrich.WithProperty("service", "core-api")
+            // environment: trường thứ 7 theo design (Logging). Đọc từ ASPNETCORE_ENVIRONMENT
+            // vì logger được tạo trước khi có WebApplicationBuilder.
+            .Enrich.WithProperty(
+                "environment",
+                Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production")
             .WriteTo.Async(c => c.Console(new CompactJsonFormatter()))
             .WriteTo.Async(c => c.File(new CompactJsonFormatter(), "Logs/logs.json"))
             .CreateLogger();
