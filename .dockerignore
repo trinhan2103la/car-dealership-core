@@ -1,0 +1,13 @@
+# Ngày 15: thu nhỏ build context cho Docker (tránh image phình, build chậm).
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/Logs/
+**/*.user
+node_modules/
+.git/
+.github/
+deploy/.env
+# Lưu ý: KHÔNG lọc appsettings.secrets.json — csproj khai báo copy bắt buộc file này
+# (hiện là {} rỗng; secret thật dùng env/user-secrets, không nằm trong file này).

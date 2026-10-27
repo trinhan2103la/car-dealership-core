@@ -15,9 +15,11 @@ D:\WorkSpace\FRT\PROJECT_PERSONAL\
 
 Docker Compose dùng build context tương đối tới `../car-dealership-bff` và `../car-dealership-web`, nên bắt buộc ba repo phải sibling.
 
-## Chạy local (Ngày 3: mới có PostgreSQL)
+## Chạy local
 
 Yêu cầu: Docker Desktop đang chạy, .NET 10 SDK, psql.
+
+### Chỉ PostgreSQL (Ngày 3)
 
 ```powershell
 # 1) Chuẩn bị biến môi trường
@@ -30,6 +32,25 @@ docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d postgre
 docker compose -f deploy/docker-compose.yml ps
 psql -h localhost -p 5432 -U cdp -d cdp -c "select version();"
 ```
+
+### Toàn bộ Core_API qua Docker (Ngày 15)
+
+Thứ tự tự động: `postgres` (healthy) → `migrator` (chạy migration + seed, thoát 0) → `core-api`.
+
+```powershell
+# Dựng lại từ đầu (xóa cả dữ liệu cũ) rồi build + chạy
+docker compose -f deploy/docker-compose.yml down -v
+docker compose -f deploy/docker-compose.yml up -d --build
+
+# Theo dõi tới khi migrator thoát và core-api lên
+docker compose -f deploy/docker-compose.yml ps
+
+# Health (từ host, qua cổng đã map). live không phụ thuộc DB; ready kiểm DB.
+curl.exe -i http://localhost:8080/health/live     # 200, body rỗng
+curl.exe -i http://localhost:8080/health/ready    # 200 khi DB sẵn sàng
+```
+
+Mục tiêu nghiệm thu: `/health/ready` trả 200 trong vòng < 5 phút kể từ `up`.
 
 Dừng: `docker compose -f deploy/docker-compose.yml down` (thêm `-v` để xóa cả dữ liệu).
 
