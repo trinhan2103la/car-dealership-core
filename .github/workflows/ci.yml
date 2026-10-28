@@ -1,0 +1,71 @@
+name: ci
+
+# Ngày 19 (ADR-011): CI riêng cho repo core-api. Chạy trên PR vào main và push lên main.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # Build + test .NET. Cấp PostgreSQL service để EF Core/Host integration test chạy đầy đủ.
+  dotnet-build-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: cdp
+          POSTGRES_PASSWORD: cdp_dev_pw
+          POSTGRES_DB: cdp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cdp -d cdp"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      ConnectionStrings__Default: 'Host=localhost;Port=5432;Database=cdp;User ID=cdp;Password=cdp_dev_pw;'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore
+        run: dotnet restore CarDealership.CoreService.slnx
+      - name: Build
+        run: dotnet build CarDealership.CoreService.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test CarDealership.CoreService.slnx -c Release --no-build --verbosity normal
+
+  # Kiểm package ABP: không có package .Pro./Commercial, chỉ Volo.* trong allowlist.
+  # Script được thêm ở Ngày 20; job khai báo sẵn, bật sau khi script tồn tại.
+  check-abp-packages:
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('deploy/scripts/check-abp-packages.sh') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Check ABP package allowlist
+        run: bash deploy/scripts/check-abp-packages.sh
+
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install commitlint
+        run: npm install --no-save @commitlint/cli @commitlint/config-conventional
+      - name: Lint PR commits
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
