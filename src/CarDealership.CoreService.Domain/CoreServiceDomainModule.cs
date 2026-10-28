@@ -20,7 +20,15 @@ namespace CarDealership.CoreService;
     typeof(AbpIdentityDomainModule),
     typeof(AbpPermissionManagementDomainIdentityModule),
     typeof(AbpSettingManagementDomainModule),
-    typeof(AbpEmailingModule)
+    typeof(AbpEmailingModule),
+    // Ngày 16 (ADR-003): 7 module nghiệp vụ của dự án (skeleton rỗng).
+    typeof(Catalog.CatalogDomainModule),
+    typeof(Showrooms.ShowroomsDomainModule),
+    typeof(Leads.LeadsDomainModule),
+    typeof(Identity.IdentityDomainModule),
+    typeof(Settings.SettingsDomainModule),
+    typeof(Audit.AuditDomainModule),
+    typeof(Analytics.AnalyticsDomainModule)
 )]
 public class CoreServiceDomainModule : AbpModule
 {

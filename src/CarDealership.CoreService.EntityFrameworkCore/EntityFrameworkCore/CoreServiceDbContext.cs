@@ -8,6 +8,13 @@ using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
+using CarDealership.CoreService.EntityFrameworkCore.Catalog;
+using CarDealership.CoreService.EntityFrameworkCore.Showrooms;
+using CarDealership.CoreService.EntityFrameworkCore.Leads;
+using CarDealership.CoreService.EntityFrameworkCore.Identity;
+using CarDealership.CoreService.EntityFrameworkCore.Settings;
+using CarDealership.CoreService.EntityFrameworkCore.Audit;
+using CarDealership.CoreService.EntityFrameworkCore.Analytics;
 
 namespace CarDealership.CoreService.EntityFrameworkCore;
 
@@ -57,6 +64,16 @@ public class CoreServiceDbContext :
         builder.ConfigureBackgroundJobs();
         builder.ConfigureAuditLogging();
         builder.ConfigureIdentity();
+
+        /* Ngày 16 (ADR-003): mỗi module của dự án có Configure riêng (hiện rỗng).
+         * Giữ ở đây để khi thêm entity chỉ sửa đúng file module tương ứng. */
+        builder.ConfigureCatalog();
+        builder.ConfigureShowrooms();
+        builder.ConfigureLeads();
+        builder.ConfigureProjectIdentity();
+        builder.ConfigureProjectSettings();
+        builder.ConfigureProjectAudit();
+        builder.ConfigureAnalytics();
 
         /* Configure your own tables/entities inside here */
 

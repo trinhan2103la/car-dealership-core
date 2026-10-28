@@ -23,6 +23,7 @@
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/CarDealership.CoreService.Application.Tests/CarDealership.CoreService.Application.Tests.csproj" />
+    <Project Path="test/CarDealership.CoreService.ArchitectureTests/CarDealership.CoreService.ArchitectureTests.csproj" />
     <Project Path="test/CarDealership.CoreService.Domain.Tests/CarDealership.CoreService.Domain.Tests.csproj" />
     <Project Path="test/CarDealership.CoreService.EntityFrameworkCore.Tests/CarDealership.CoreService.EntityFrameworkCore.Tests.csproj" />
     <Project Path="test/CarDealership.CoreService.HttpApi.Host.Tests/CarDealership.CoreService.HttpApi.Host.Tests.csproj" />
