@@ -1,0 +1,33 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Version>1.0.0</Version>
+    <!-- CS1591: thiếu XML doc (mặc định ABP). NU1510: security pin bên dưới là cố ý,
+         không cần cảnh báo "package đã có sẵn trong shared framework". -->
+    <NoWarn>$(NoWarn);CS1591;NU1510</NoWarn>
+	<AbpProjectType>app</AbpProjectType>
+  </PropertyGroup>
+
+  <Target Name="NoWarnOnRazorViewImportedTypeConflicts" BeforeTargets="RazorCoreCompile">
+    <PropertyGroup>
+      <NoWarn>$(NoWarn);0436</NoWarn>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <Content Remove="$(UserProfile)\.nuget\packages\*\*\contentFiles\any\*\*.abppkg*" />
+  </ItemGroup>
+
+  <!--
+    Security pin (xác minh 2026-10-20): ép phiên bản đã vá cho 2 package transitive
+    dính CVE HIGH mà ABP 10.7 kéo về (version 10.0.11, affected <= 10.0.12).
+      - System.Security.Cryptography.Pkcs : GHSA-846f-f764-76mx (CVE-2026-84008) -> vá 10.0.13
+      - System.Security.Cryptography.Xml  : GHSA-7hqp-7c5m-4vq6 (CVE-2026-96960) -> vá 10.0.13
+    Nguồn: github.com/advisories. Xem lại/gỡ pin khi ABP cập nhật phiên bản transitive.
+  -->
+  <ItemGroup>
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,74 @@
+# Docker Compose xuyên service cho Environment `dev` (local).
+# Chạy TỪ repo car-dealership-core:  docker compose -f deploy/docker-compose.yml up -d
+# Quy ước: clone cả 3 repo sibling dưới cùng thư mục cha (D:\WorkSpace\FRT\PROJECT_PERSONAL\):
+#   car-dealership-core/  car-dealership-bff/  car-dealership-web/
+# Ngày 3: service `postgres`. Ngày 15: thêm `migrator` (chạy xong rồi thoát) và `core-api`.
+# Thứ tự khởi động: postgres (healthy) -> migrator (completed) -> core-api.
+
+name: car-dealership
+
+services:
+    postgres:
+        image: postgres:18
+        container_name: cdp-postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-cdp}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cdp_dev_pw}
+            POSTGRES_DB: ${POSTGRES_DB:-cdp}
+        ports:
+            - '${POSTGRES_PORT:-5432}:5432'
+        volumes:
+            # Postgres 18 đổi quy ước: mount ở /var/lib/postgresql (không phải .../data).
+            # Dữ liệu sẽ nằm trong subdir theo major version bên trong volume này.
+            - pgdata:/var/lib/postgresql
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U ${POSTGRES_USER:-cdp} -d ${POSTGRES_DB:-cdp}',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    # Ngày 15: chạy migration + data seed rồi thoát (exit 0). core-api chờ service này completed.
+    migrator:
+        image: cdp-migrator
+        build:
+            # Build context là ROOT repo (thư mục cha của deploy/). Dockerfile ở root.
+            context: ..
+            dockerfile: Dockerfile.migrator
+        container_name: cdp-migrator
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            # Trong mạng compose, Postgres có hostname = tên service "postgres".
+            ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
+        restart: 'no'
+
+    # Ngày 15: Core_API. Host không tự migrate (Ngày 9) nên phải chờ migrator xong.
+    core-api:
+        image: cdp-core-api
+        build:
+            context: ..
+            dockerfile: Dockerfile
+        container_name: cdp-core-api
+        depends_on:
+            migrator:
+                condition: service_completed_successfully
+        environment:
+            ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+            ASPNETCORE_URLS: http://+:8080
+            ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
+            # App:SelfUrl mặc định là https://localhost:44382 (dev); override cho container.
+            App__SelfUrl: ${CORE_API_SELF_URL:-http://localhost:8080}
+        ports:
+            - '${CORE_API_PORT:-8080}:8080'
+        restart: unless-stopped
+        # Không đặt healthcheck trong container: image aspnet không có curl/wget.
+        # Xác minh /health/ready từ host qua cổng đã map (xem README mục health).
+
+volumes:
+    pgdata:

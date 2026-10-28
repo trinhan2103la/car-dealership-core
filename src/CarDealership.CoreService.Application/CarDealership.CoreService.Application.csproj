@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CarDealership.CoreService</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CarDealership.CoreService.Domain\CarDealership.CoreService.Domain.csproj" />
+    <ProjectReference Include="..\CarDealership.CoreService.Application.Contracts\CarDealership.CoreService.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Identity.Application" Version="10.7.0" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="10.7.0" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="10.7.0" />
+  </ItemGroup>
+
+</Project>

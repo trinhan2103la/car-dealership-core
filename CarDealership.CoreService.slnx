@@ -1,0 +1,33 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CarDealership.CoreService.Application.Contracts/CarDealership.CoreService.Application.Contracts.csproj" />
+    <Project Path="src/CarDealership.CoreService.Application/CarDealership.CoreService.Application.csproj" />
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <Project Path="src/CarDealership.CoreService.DbMigrator/CarDealership.CoreService.DbMigrator.csproj" />
+    <Project Path="src/CarDealership.CoreService.Domain.Shared/CarDealership.CoreService.Domain.Shared.csproj" />
+    <Project Path="src/CarDealership.CoreService.Domain/CarDealership.CoreService.Domain.csproj" />
+    <Project Path="src/CarDealership.CoreService.EntityFrameworkCore/CarDealership.CoreService.EntityFrameworkCore.csproj" />
+    <Project Path="src/CarDealership.CoreService.HttpApi.Host/CarDealership.CoreService.HttpApi.Host.csproj" />
+    <Project Path="src/CarDealership.CoreService.HttpApi/CarDealership.CoreService.HttpApi.csproj" />
+    
+    
+    
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/CarDealership.CoreService.Application.Tests/CarDealership.CoreService.Application.Tests.csproj" />
+    <Project Path="test/CarDealership.CoreService.ArchitectureTests/CarDealership.CoreService.ArchitectureTests.csproj" />
+    <Project Path="test/CarDealership.CoreService.Domain.Tests/CarDealership.CoreService.Domain.Tests.csproj" />
+    <Project Path="test/CarDealership.CoreService.EntityFrameworkCore.Tests/CarDealership.CoreService.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/CarDealership.CoreService.HttpApi.Host.Tests/CarDealership.CoreService.HttpApi.Host.Tests.csproj" />
+    <Project Path="test/CarDealership.CoreService.TestBase/CarDealership.CoreService.TestBase.csproj" />
+    
+  </Folder>
+</Solution>

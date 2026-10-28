@@ -1,0 +1,23 @@
+# Ngày 15: image DbMigrator (chạy migration + data seed rồi thoát). Multi-stage, non-root.
+# Build từ ROOT repo car-dealership-core:
+#   docker build -f Dockerfile.migrator -t cdp-migrator .
+
+# ---- Stage build ----
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY . .
+RUN dotnet restore src/CarDealership.CoreService.DbMigrator/CarDealership.CoreService.DbMigrator.csproj
+RUN dotnet publish src/CarDealership.CoreService.DbMigrator/CarDealership.CoreService.DbMigrator.csproj \
+    -c Release -o /app --no-restore
+
+# ---- Stage runtime ----
+# DbMigrator là console app -> dùng image runtime (không cần aspnet).
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
+WORKDIR /app
+
+USER app
+
+COPY --from=build /app .
+
+ENTRYPOINT ["dotnet", "CarDealership.CoreService.DbMigrator.dll"]

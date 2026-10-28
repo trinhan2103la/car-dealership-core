@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CarDealership.CoreService</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetArchTest.Rules" Version="1.3.2" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Cần Domain (7 module) + HttpApi (controller) để kiểm ranh giới -->
+    <ProjectReference Include="..\..\src\CarDealership.CoreService.Domain\CarDealership.CoreService.Domain.csproj" />
+    <ProjectReference Include="..\..\src\CarDealership.CoreService.HttpApi\CarDealership.CoreService.HttpApi.csproj" />
+    <!-- TestBase mang theo xunit + Shouldly + runner -->
+    <ProjectReference Include="..\CarDealership.CoreService.TestBase\CarDealership.CoreService.TestBase.csproj" />
+  </ItemGroup>
+
+</Project>
