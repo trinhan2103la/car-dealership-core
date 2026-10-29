@@ -52,6 +52,9 @@ curl.exe -i http://localhost:8080/health/ready    # 200 khi DB sẵn sàng
 
 Mục tiêu nghiệm thu: `/health/ready` trả 200 trong vòng < 5 phút kể từ `up`.
 
+Swagger UI chỉ bật khi `ASPNETCORE_ENVIRONMENT=Development`. Compose mặc định là `Production` nên `/swagger`
+trả 404; muốn xem thì đặt `ASPNETCORE_ENVIRONMENT=Development` trong `deploy/.env` rồi `up -d` lại.
+
 Dừng: `docker compose -f deploy/docker-compose.yml down` (thêm `-v` để xóa cả dữ liệu).
 
 ## Kiểm tra package ABP (giấy phép)

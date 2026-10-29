@@ -17,8 +17,9 @@ namespace CarDealership.CoreService.Routing;
 /// - Khi thêm route mới ở ngày sau, test sẽ ĐỎ cho tới khi cập nhật snapshot có chủ đích.
 /// Lưu ý: /health/live và /health/ready KHÔNG xuất hiện ở đây vì được đăng ký bằng
 /// app.UseHealthChecks(...) (middleware terminal), không phải endpoint routing.
-/// Ở thời điểm này route duy nhất là 2 route MVC mặc định của HomeController
-/// (redirect "~/swagger"); mọi controller ABP đã bị HideAbpModuleControllersConvention gỡ.
+/// Ngày 22: đã xóa HomeController (chỉ redirect "/" sang "/swagger"), nên hiện KHÔNG có route nào;
+/// snapshot rỗng. Mọi controller ABP đã bị HideAbpModuleControllersConvention gỡ.
+/// Dòng bắt đầu bằng '#' trong RouteSnapshot.verified.txt là chú thích và bị bỏ qua.
 /// </summary>
 public class RouteSnapshotTests : IClassFixture<CoreServiceWebApplicationFactory>
 {
@@ -48,7 +49,7 @@ public class RouteSnapshotTests : IClassFixture<CoreServiceWebApplicationFactory
 
         var expected = File.ReadAllLines(SnapshotPath())
             .Select(l => l.Trim())
-            .Where(l => l.Length > 0)
+            .Where(l => l.Length > 0 && !l.StartsWith('#'))
             .OrderBy(p => p, StringComparer.Ordinal)
             .ToList();
 

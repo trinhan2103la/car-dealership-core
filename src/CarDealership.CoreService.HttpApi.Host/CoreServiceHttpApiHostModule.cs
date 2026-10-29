@@ -143,14 +143,25 @@ public class CoreServiceHttpApiHostModule : AbpModule
             Predicate = check => check.Tags.Contains("ready")
         });
 
-        app.UseSwagger();
-        app.UseAbpSwaggerUI(c =>
+        // Ngày 22: Swagger UI và swagger.json CHỈ bật ở Development (design: "Swagger UI chỉ bật
+        // ở dev", Req 29.5). Ở môi trường khác (compose mặc định là Production) không phục vụ
+        // qua HTTP để không phơi bề mặt API; bản OpenAPI cho CI xuất bằng CLI ở build time.
+        if (env.IsDevelopment())
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "CoreService API");
-        });
+            app.UseSwagger();
+            app.UseAbpSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "CoreService API");
+            });
+        }
 
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
-        app.UseConfiguredEndpoints();
+
+        // Ngày 22 (Req 29.5): CHỈ map attribute routing ([Route] tường minh). Không dùng
+        // app.UseConfiguredEndpoints() vì ABP tự thêm route quy ước {controller=Home}/{action=Index}/{id?}
+        // (cả bản có {area}) và Razor Pages: controller nào quên [Route] sẽ tự lộ ra ở /Ten/Action.
+        // Nếu sau này module cần endpoint do ABP đăng ký (SignalR, dashboard...) thì thêm có chủ đích.
+        app.UseEndpoints(endpoints => endpoints.MapControllers());
     }
 }
