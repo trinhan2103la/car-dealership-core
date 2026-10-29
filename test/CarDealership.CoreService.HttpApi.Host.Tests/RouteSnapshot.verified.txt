@@ -1,2 +1,6 @@
-/{area}/{controller=Home}/{action=Index}/{id?}
-/{controller=Home}/{action=Index}/{id?}
+# Snapshot route khai báo tường minh (Req 29.5). Mỗi dòng là một route pattern.
+# Hiện KHÔNG có route nào: chưa có controller của dự án, và HomeController (redirect sang
+# /swagger) đã bị xóa ở Ngày 22.
+# /health/live và /health/ready không nằm ở đây vì đăng ký bằng app.UseHealthChecks(...)
+# (middleware), không phải endpoint routing.
+# Thêm controller mới => test đỏ cho tới khi route xuất hiện ở file này (cập nhật có chủ đích).

@@ -52,7 +52,23 @@ curl.exe -i http://localhost:8080/health/ready    # 200 khi DB sẵn sàng
 
 Mục tiêu nghiệm thu: `/health/ready` trả 200 trong vòng < 5 phút kể từ `up`.
 
+Swagger UI chỉ bật khi `ASPNETCORE_ENVIRONMENT=Development`. Compose mặc định là `Production` nên `/swagger`
+trả 404; muốn xem thì đặt `ASPNETCORE_ENVIRONMENT=Development` trong `deploy/.env` rồi `up -d` lại.
+
 Dừng: `docker compose -f deploy/docker-compose.yml down` (thêm `-v` để xóa cả dữ liệu).
+
+## Kiểm tra package ABP (giấy phép)
+
+Chỉ dùng ABP open-source. Script chặn package thương mại (`.Pro.`, `Commercial`, `Volo.Saas`...) và
+mọi `Volo.*` ngoài `deploy/scripts/abp-allowlist.txt` (CI chạy ở job `check-abp-packages`).
+
+```bash
+dotnet restore CarDealership.CoreService.slnx
+bash deploy/scripts/check-abp-packages.sh            # quét solution thật
+bash deploy/scripts/test-check-abp-packages.sh       # tự kiểm script bằng fixture
+```
+
+Khi thêm package `Volo.*` hợp lệ: xác nhận nó thuộc repo `abpframework/abp`, rồi thêm một dòng vào allowlist.
 
 ## Tài liệu
 
