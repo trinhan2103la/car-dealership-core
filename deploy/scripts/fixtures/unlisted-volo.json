@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "parameters": "--include-transitive",
+  "projects": [
+    {
+      "path": "fixture/Fixture.csproj",
+      "frameworks": [
+        {
+          "framework": "net10.0",
+          "topLevelPackages": [
+            {
+              "id": "Volo.Abp.Core",
+              "requestedVersion": "10.7.0",
+              "resolvedVersion": "10.7.0"
+            },
+            {
+              "id": "Volo.Abp.SomethingNotReviewed",
+              "requestedVersion": "10.7.0",
+              "resolvedVersion": "10.7.0"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
