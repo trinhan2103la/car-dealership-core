@@ -69,7 +69,7 @@ public class RouteSnapshotTests : IClassFixture<CoreServiceWebApplicationFactory
         // request tới routing. Không có DB -> 500 (không phản ánh đúng 404 ở production).
         // xUnit 2.x không có Assert.SkipUnless; không có DB thì bỏ qua (no-op) để test suite
         // vẫn xanh ở máy chưa chạy compose. Có DB -> kiểm 404 thật.
-        if (!DbProbe.IsPostgresAvailable())
+        if (!DbProbe.IsMigratedDatabaseAvailable())
         {
             return;
         }

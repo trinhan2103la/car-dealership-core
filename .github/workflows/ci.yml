@@ -39,6 +39,11 @@ jobs:
               run: dotnet restore CarDealership.CoreService.slnx
             - name: Build
               run: dotnet build CarDealership.CoreService.slnx -c Release --no-restore
+            # Service container Postgres bắt đầu RỖNG. Các test cần DB (route 404, /health/ready, Swagger)
+            # đòi schema vì AbpRequestLocalizationMiddleware đọc bảng AbpSettings trước mọi request.
+            # Chạy DbMigrator như compose để test chạy trên DB giống thật (chuỗi kết nối lấy từ env của job).
+            - name: Apply migrations (DbMigrator)
+              run: dotnet run --project src/CarDealership.CoreService.DbMigrator -c Release --no-build
             - name: Test
               run: dotnet test CarDealership.CoreService.slnx -c Release --no-build --verbosity normal
 

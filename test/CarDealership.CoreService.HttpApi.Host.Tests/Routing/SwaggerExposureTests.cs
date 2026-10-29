@@ -32,7 +32,7 @@ public class SwaggerExposureTests :
     [InlineData("/swagger/v1/swagger.json")]
     public async Task Swagger_is_not_served_in_production(string path)
     {
-        if (!DbProbe.IsPostgresAvailable())
+        if (!DbProbe.IsMigratedDatabaseAvailable())
         {
             return;
         }
@@ -50,7 +50,7 @@ public class SwaggerExposureTests :
     [Fact]
     public async Task Swagger_json_is_served_in_development()
     {
-        if (!DbProbe.IsPostgresAvailable())
+        if (!DbProbe.IsMigratedDatabaseAvailable())
         {
             return;
         }

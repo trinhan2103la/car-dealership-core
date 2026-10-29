@@ -38,7 +38,7 @@ public class HealthTests : IClassFixture<CoreServiceWebApplicationFactory>
     public async Task Ready_returns_200_when_db_available()
     {
         // xUnit 2.x không có Assert.SkipUnless; không có DB thì bỏ qua (no-op).
-        if (!DbProbe.IsPostgresAvailable())
+        if (!DbProbe.IsMigratedDatabaseAvailable())
         {
             return;
         }
