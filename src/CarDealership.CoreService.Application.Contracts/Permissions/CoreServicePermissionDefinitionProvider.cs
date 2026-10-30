@@ -13,8 +13,7 @@ public class CoreServicePermissionDefinitionProvider : PermissionDefinitionProvi
         //myGroup.AddPermission(CoreServicePermissions.MyPermission1, L("Permission:MyPermission1"));
     }
 
-    private static LocalizableString L(string name)
-    {
+    private static LocalizableString L(string name)    {
         return LocalizableString.Create<CoreServiceResource>(name);
     }
 }
