@@ -15,6 +15,7 @@ namespace CarDealership.CoreService.EntityFrameworkCore.Samples;
  * Only test your custom repository methods.
  */
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
+[Trait("Category", "Integration")]
 public class SampleRepositoryTests : CoreServiceEntityFrameworkCoreTestBase
 {
     private readonly IRepository<IdentityUser, Guid> _appUserRepository;

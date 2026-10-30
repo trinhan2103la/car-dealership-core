@@ -20,6 +20,7 @@ namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 /// Chạy qua IdentityUserManager thật + SQLite in-memory, tức là đúng đường mà đăng nhập/seed sẽ dùng.
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
+[Trait("Category", "Integration")]
 public class PasswordPolicyTests : CoreServiceEntityFrameworkCoreTestBase
 {
     /// <summary>Mật khẩu dài đúng <paramref name="length"/> ký tự, có đủ hoa/thường/số/ký tự đặc biệt.</summary>
