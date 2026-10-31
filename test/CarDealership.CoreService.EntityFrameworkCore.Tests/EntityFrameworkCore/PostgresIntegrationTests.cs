@@ -60,7 +60,7 @@ public class PostgresIntegrationTests : CoreServiceEntityFrameworkCoreTestBase
             var users = await GetRequiredService<IIdentityUserRepository>().GetListAsync();
             users.Count(u => u.UserName == ProbeUserName).ShouldBe(1);
             // Dữ liệu seed vẫn có (reset chạy TRƯỚC seed).
-            users.ShouldContain(u => u.UserName == "admin");
+            users.ShouldContain(u => u.UserName == CoreServiceTestConsts.SuperAdminEmail);
         });
     }
 }

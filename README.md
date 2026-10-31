@@ -57,6 +57,20 @@ trả 404; muốn xem thì đặt `ASPNETCORE_ENVIRONMENT=Development` trong `de
 
 Dừng: `docker compose -f deploy/docker-compose.yml down` (thêm `-v` để xóa cả dữ liệu).
 
+### SuperAdmin ban đầu
+
+Migrator seed 4 Role cố định (SuperAdmin, ContentEditor, SalesStaff, Viewer), grant theo ma trận Req 15.4 và
+một SuperAdmin đầu tiên. Tài khoản này lấy từ biến môi trường, **không có mặc định trong mã nguồn**:
+
+| Biến                       | Ý nghĩa                                          |
+| -------------------------- | ------------------------------------------------ |
+| `SEED_SUPERADMIN_EMAIL`    | Email (cũng là UserName) của SuperAdmin          |
+| `SEED_SUPERADMIN_PASSWORD` | 12–128 ký tự, có hoa, thường, số, ký tự đặc biệt |
+
+Đặt hai biến trong `deploy/.env` (xem `deploy/.env.example`) **trước** khi `up -d --build`. Thiếu hoặc sai thì migrator
+dừng với exit code khác 0, thông báo chỉ nêu tên biến (không in giá trị) và không ghi gì vào DB. Nếu email đã tồn tại,
+tài khoản và mật khẩu được giữ nguyên.
+
 ## Kiểm tra package ABP (giấy phép)
 
 Chỉ dùng ABP open-source. Script chặn package thương mại (`.Pro.`, `Commercial`, `Volo.Saas`...) và

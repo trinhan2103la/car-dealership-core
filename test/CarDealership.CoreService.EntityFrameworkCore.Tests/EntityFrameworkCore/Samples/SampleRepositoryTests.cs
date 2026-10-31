@@ -35,7 +35,7 @@ public class SampleRepositoryTests : CoreServiceEntityFrameworkCoreTestBase
         {
                 //Act
                 var adminUser = await (await _appUserRepository.GetQueryableAsync())
-                .Where(u => u.UserName == "admin")
+                .Where(u => u.UserName == CoreServiceTestConsts.SuperAdminEmail)
                 .FirstOrDefaultAsync();
 
                 //Assert

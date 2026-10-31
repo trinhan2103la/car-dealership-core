@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
-using Volo.Abp.Identity;
 
 namespace CarDealership.CoreService.Data;
 
@@ -62,10 +61,9 @@ public class CoreServiceDbMigrationService : ITransientDependency
     {
         Logger.LogInformation("Executing host database seed...");
 
-        await _dataSeeder.SeedAsync(new DataSeedContext()
-            .WithProperty(IdentityDataSeedContributor.AdminEmailPropertyName, IdentityDataSeedContributor.AdminEmailDefaultValue)
-            .WithProperty(IdentityDataSeedContributor.AdminPasswordPropertyName, IdentityDataSeedContributor.AdminPasswordDefaultValue)
-        );
+        // Req 25.6: KHÔNG truyền email/mật khẩu mặc định của ABP. SuperAdmin lấy từ biến môi trường
+        // SEED_SUPERADMIN_EMAIL / SEED_SUPERADMIN_PASSWORD trong RoleSeedContributor.
+        await _dataSeeder.SeedAsync(new DataSeedContext());
     }
 
     private bool AddInitialMigrationIfNotExist()
