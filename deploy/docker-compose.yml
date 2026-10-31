@@ -46,6 +46,10 @@ services:
         environment:
             # Trong mạng compose, Postgres có hostname = tên service "postgres".
             ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
+            # Ngày 26 (Req 25.6–25.7): SuperAdmin ban đầu lấy từ biến môi trường, KHÔNG có mặc định trong mã nguồn.
+            # Để trống thì migrator dừng với lỗi nêu tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
+            SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL:-}
+            SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD:-}
         restart: 'no'
 
     # Ngày 15: Core_API. Host không tự migrate (Ngày 9) nên phải chờ migrator xong.

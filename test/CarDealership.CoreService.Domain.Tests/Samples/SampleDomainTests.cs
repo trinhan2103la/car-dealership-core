@@ -34,13 +34,13 @@ public abstract class SampleDomainTests<TStartupModule> : CoreServiceDomainTestB
         await WithUnitOfWorkAsync(async () =>
         {
             adminUser = await _identityUserRepository
-                .FindByNormalizedUserNameAsync("ADMIN");
+                .FindByNormalizedUserNameAsync(CoreServiceTestConsts.SuperAdminEmail.ToUpperInvariant());
 
             await _identityUserManager.SetEmailAsync(adminUser, "newemail@abp.io");
             await _identityUserRepository.UpdateAsync(adminUser);
         });
 
-        adminUser = await _identityUserRepository.FindByNormalizedUserNameAsync("ADMIN");
+        adminUser = await _identityUserRepository.FindByNormalizedUserNameAsync(CoreServiceTestConsts.SuperAdminEmail.ToUpperInvariant());
         adminUser.Email.ShouldBe("newemail@abp.io");
     }
 }

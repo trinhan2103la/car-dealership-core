@@ -3,7 +3,8 @@
 namespace CarDealership.CoreService.EntityFrameworkCore;
 
 [CollectionDefinition(CoreServiceTestConsts.CollectionDefinitionName)]
-public class CoreServiceEntityFrameworkCoreCollection : ICollectionFixture<CoreServiceEntityFrameworkCoreFixture>
+[Trait("Category", "Integration")]
+public class CoreServiceEntityFrameworkCoreCollection : ICollectionFixture<PostgresFixture>
 {
 
 }

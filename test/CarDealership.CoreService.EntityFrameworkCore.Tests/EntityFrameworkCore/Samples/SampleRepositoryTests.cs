@@ -15,6 +15,7 @@ namespace CarDealership.CoreService.EntityFrameworkCore.Samples;
  * Only test your custom repository methods.
  */
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
+[Trait("Category", "Integration")]
 public class SampleRepositoryTests : CoreServiceEntityFrameworkCoreTestBase
 {
     private readonly IRepository<IdentityUser, Guid> _appUserRepository;
@@ -34,7 +35,7 @@ public class SampleRepositoryTests : CoreServiceEntityFrameworkCoreTestBase
         {
                 //Act
                 var adminUser = await (await _appUserRepository.GetQueryableAsync())
-                .Where(u => u.UserName == "admin")
+                .Where(u => u.UserName == CoreServiceTestConsts.SuperAdminEmail)
                 .FirstOrDefaultAsync();
 
                 //Assert

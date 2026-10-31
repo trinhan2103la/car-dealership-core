@@ -11,7 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\CarDealership.CoreService.EntityFrameworkCore\CarDealership.CoreService.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\CarDealership.CoreService.Application.Tests\CarDealership.CoreService.Application.Tests.csproj" />
-    <PackageReference Include="Volo.Abp.EntityFrameworkCore.Sqlite" Version="10.7.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.16.0" />
   </ItemGroup>
 
   <ItemGroup>
