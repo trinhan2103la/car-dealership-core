@@ -14,6 +14,15 @@ namespace CarDealership.CoreService;
 /// </summary>
 public static class DbProbe
 {
+    static DbProbe()
+    {
+        // Npgsql đọc công tắc này MỘT LẦN khi khởi tạo kiểu tĩnh. Probe mở kết nối TRƯỚC khi host dựng (host mới đặt công tắc
+        // ở PreConfigureServices), nên không đặt ở đây thì cả process test chạy ở chế độ timestamp mới và mọi INSERT
+        // DateTime Kind=Utc vào cột "timestamp without time zone" của ABP (AbpAuditLogs) đều lỗi 500.
+        // Production không bị: Program/host đặt công tắc trước khi chạm Npgsql.
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
     private const string DefaultConnectionString =
         "Host=localhost;Port=5432;Database=cdp;User ID=cdp;Password=cdp_dev_pw;Timeout=5;";
 

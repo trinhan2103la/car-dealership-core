@@ -9,6 +9,7 @@ using Volo.Abp.Localization;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.PermissionManagement.Identity;
+using Volo.Abp.Timing;
 using Volo.Abp.SettingManagement;
 
 namespace CarDealership.CoreService;
@@ -54,6 +55,13 @@ public class CoreServiceDomainModule : AbpModule
             options.Languages.Add(new LanguageInfo("zh-Hant", "zh-Hant", "繁體中文"));
             options.Languages.Add(new LanguageInfo("de-DE", "de-DE", "Deutsch"));
             options.Languages.Add(new LanguageInfo("es", "es", "Español"));
+        });
+
+        // Ngày 33 (design "Quy ước chung": thời gian luôn UTC): IClock.Now trả UTC. Mặc định của ABP là Unspecified
+        // (= giờ máy), sẽ làm sai lệch LoginAttemptPolicy / hết hạn session theo múi giờ máy chủ.
+        Configure<AbpClockOptions>(options =>
+        {
+            options.Kind = System.DateTimeKind.Utc;
         });
 
         Configure<AbpMultiTenancyOptions>(options =>

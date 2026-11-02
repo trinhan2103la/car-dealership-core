@@ -1,0 +1,72 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
+using Volo.Abp.DependencyInjection;
+using Volo.Abp.SecurityLog;
+
+namespace CarDealership.CoreService.Identity;
+
+public static class SecurityEventActions
+{
+    public const string LoginSucceeded = "AdminLoginSucceeded";
+    public const string LoginFailed = "AdminLoginFailed";
+    public const string AccountLockedOut = "AdminAccountLockedOut";
+}
+
+public static class LoginFailureReasons
+{
+    public const string UnknownUser = "UnknownUser";
+    public const string InvalidPassword = "InvalidPassword";
+    public const string Inactive = "Inactive";
+    public const string Locked = "Locked";
+}
+
+/// <summary>Ghi sự kiện bảo mật. Tạm ghi vào ABP security log; Ngày 58 chuyển sang IAuditTrail (aud_entries).</summary>
+public interface ISecurityEventWriter
+{
+    Task WriteAsync(string action, string? email, Guid? userId, string? reason);
+}
+
+public class SecurityEventWriter : ISecurityEventWriter, ITransientDependency
+{
+    private const string InvalidEmailPlaceholder = "(invalid-email)";
+    private readonly ISecurityLogManager _securityLogManager;
+
+    public SecurityEventWriter(ISecurityLogManager securityLogManager)
+    {
+        _securityLogManager = securityLogManager;
+    }
+
+    public Task WriteAsync(string action, string? email, Guid? userId, string? reason)
+    {
+        return _securityLogManager.SaveAsync(log =>
+        {
+            log.Identity = "CarDealership.Admin";
+            log.Action = action;
+            log.UserId = userId;
+            log.UserName = SafeEmail(email);
+            if (!string.IsNullOrEmpty(reason))
+            {
+                log.ExtraProperties["reason"] = reason;
+            }
+
+            // KHÔNG bao giờ đưa mật khẩu, session id hay hash vào đây.
+        });
+    }
+
+    /// <summary>
+    /// Người dùng có thể gõ nhầm mật khẩu vào ô email; chỉ ghi chuỗi đúng dạng email (và đủ ngắn), còn lại thay bằng placeholder.
+    /// </summary>
+    internal static string SafeEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return InvalidEmailPlaceholder;
+        }
+
+        var trimmed = email.Trim();
+        return trimmed.Length <= 256 && new EmailAddressAttribute().IsValid(trimmed)
+            ? trimmed
+            : InvalidEmailPlaceholder;
+    }
+}

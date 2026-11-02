@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog.Context;
 
 namespace CarDealership.CoreService.Middleware;
@@ -38,6 +39,12 @@ public class CorrelationIdMiddleware
             context.Response.Headers[HeaderName] = correlationId;
             return Task.CompletedTask;
         });
+
+        // Ngày 33: đẩy cả vào ICorrelationIdProvider của ABP để security log / audit lấy đúng Correlation_Id
+        // (middleware của ta thay UseCorrelationId của ABP nên provider này không tự được đặt).
+        // Host tối giản trong test không có ABP thì bỏ qua.
+        var abpProvider = context.RequestServices.GetService<Volo.Abp.Tracing.ICorrelationIdProvider>();
+        using var abpScope = abpProvider?.Change(correlationId);
 
         using (LogContext.PushProperty("Correlation_Id", correlationId))
         {
