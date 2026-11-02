@@ -85,18 +85,23 @@ $env:ConnectionStrings__Default = 'Host=localhost;Port=5432;Database=<ten>;User 
 $env:SEED_SUPERADMIN_EMAIL = 'superadmin@example.com'
 $env:SEED_SUPERADMIN_PASSWORD = '<12-128 ky tu, du hoa/thuong/so/ky tu dac biet>'
 $env:EDGE_KEY = '<chuoi ngau nhien >= 32 ky tu, vi du: openssl rand -hex 32>'   # chi host can, migrator khong can
+$env:SERVICE_JWT_PUBLIC_KEY = '<khoa CONG KHAI ES256 P-256: PEM mot dong voi \n, hoac base64 SubjectPublicKeyInfo>'
 dotnet run --project src/CarDealership.CoreService.DbMigrator
 dotnet run --project src/CarDealership.CoreService.HttpApi.Host --no-launch-profile   # ASPNETCORE_URLS=http://127.0.0.1:5099
 ```
 
 ### Gọi thử API đăng nhập (Ngày 33–34)
 
-Chỉ BFF gọi Core_API trong hệ thống thật. Từ Ngày 36 mọi request (trừ `GET /health/live`) phải kèm header `X-Edge-Key: <giá trị EDGE_KEY>`, thiếu hoặc sai thì nhận **404 rỗng** (giống route không tồn tại). Từ Ngày 37 sẽ thêm JWT nên không curl thẳng được nữa.
+Chỉ BFF gọi Core_API trong hệ thống thật. Từ Ngày 36 mọi request (trừ `GET /health/live`) phải kèm header `X-Edge-Key: <giá trị EDGE_KEY>`, thiếu hoặc sai thì nhận **404 rỗng** (giống route không tồn tại). **Từ Ngày 37 mọi request (trừ `GET /health/live`) còn phải kèm `Authorization: Bearer <service JWT>`** do BFF ký bằng khóa riêng ES256; thiếu/sai/hết hạn thì 401, đúng JWT nhưng sai `scope` thì 403 (`scope=bff` cho endpoint thường, `scope=jobs` chỉ cho `/api/jobs/*`). Nên không curl thẳng được nữa nếu không tự ký token; `/health/ready` cũng cần JWT (UptimeRobot chỉ gọi `/health/ready` của BFF).
+
+Quy tắc JWT (ADR-004): thuật toán **chỉ ES256**; `iss=bff`, `aud=core-api`; `exp − iat` ≤ 60 giây; bắt buộc `iat`, `exp`, `jti`; đúng một giá trị `scope`; lệch đồng hồ cho phép 5 giây. `SERVICE_JWT_PUBLIC_KEY` là biến **bắt buộc** của host (PEM hoặc base64 SPKI, đường cong P-256): thiếu, sai định dạng, sai đường cong hoặc là khóa **riêng** thì process thoát mã 1 và chỉ log tên biến. Khóa riêng chỉ nằm ở BFF (`SERVICE_JWT_PRIVATE_KEY` trong `car-dealership-bff/.env`, đã gitignore).
+
+Endpoint mới dưới `/api/jobs/*` tự động dùng policy `ServiceJobs` (convention), endpoint nào quên khai báo bảo mật rơi vào policy mặc định `ServiceBff` thay vì mở công khai; muốn mở công khai phải ghi `[AllowAnonymous]` có chủ đích.
 
 `EDGE_KEY` là biến môi trường **bắt buộc** của host: thiếu hoặc ngắn hơn 32 ký tự thì process thoát mã 1 ngay khi khởi động và log tên biến (không in giá trị). Trong `deploy/.env` đặt `EDGE_KEY=...` cho `core-api` của compose. Chạy host từ Rider/IDE thì thêm `EDGE_KEY` vào biến môi trường của cấu hình chạy.
 
 ```powershell
-curl.exe -s -H "X-Edge-Key: $env:EDGE_KEY" http://127.0.0.1:5099/health/ready
+curl.exe -s -H "X-Edge-Key: $env:EDGE_KEY" -H "Authorization: Bearer $env:SERVICE_JWT" http://127.0.0.1:5099/health/ready   # SERVICE_JWT: token ES256 do BFF ký (Ngày 38)
 ```
 
 | Method | Route                            | Ý nghĩa                                                                                                                |

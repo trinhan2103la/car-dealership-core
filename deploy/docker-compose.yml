@@ -1,4 +1,4 @@
-# Docker Compose xuyên service cho Environment `dev` (local).
+﻿# Docker Compose xuyên service cho Environment `dev` (local).
 # Chạy TỪ repo car-dealership-core:  docker compose -f deploy/docker-compose.yml up -d
 # Quy ước: clone cả 3 repo sibling dưới cùng thư mục cha (D:\WorkSpace\FRT\PROJECT_PERSONAL\):
 #   car-dealership-core/  car-dealership-bff/  car-dealership-web/
@@ -72,6 +72,9 @@ services:
             # Ngày 36 (Req 28.12, 16.12): khóa Edge, BẮT BUỘC (≥ 32 ký tự). Để trống thì core-api thoát mã khác 0 ngay khi
             # khởi động và log tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
             EDGE_KEY: ${EDGE_KEY:-}
+            # Ngày 37 (ADR-004, Req 16.12): KHÓA CÔNG KHAI ES256 để kiểm JWT của BFF, BẮT BUỘC. Chỉ khóa công khai; khóa riêng
+            # (SERVICE_JWT_PRIVATE_KEY) chỉ ở BFF. Cấp nhầm khóa riêng thì core-api từ chối khởi động.
+            SERVICE_JWT_PUBLIC_KEY: ${SERVICE_JWT_PUBLIC_KEY:-}
         ports:
             - '${CORE_API_PORT:-8080}:8080'
         restart: unless-stopped

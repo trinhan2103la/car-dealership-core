@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
@@ -51,7 +51,12 @@ public class CoreServiceHttpApiHostModule : AbpModule
         Configure<MvcOptions>(options =>
         {
             options.Conventions.Add(new HideAbpModuleControllersConvention());
+            // Ngày 37: mọi action dưới /api/jobs tự động dùng policy ServiceJobs (JWT scope=jobs).
+            options.Conventions.Add(new CarDealership.CoreService.Auth.JobsRouteAuthorizationConvention());
         });
+
+        // Ngày 37 (ADR-004): xác thực JWT ES256 của BFF + policy ServiceBff (mặc định) / ServiceJobs.
+        CarDealership.CoreService.Auth.ServiceCredentialSetup.AddServiceCredential(context.Services);
 
         // Ngày 36: giá trị Edge key chỉ từ biến môi trường EDGE_KEY (đọc lười để cấu hình thêm sau, ví dụ trong test, vẫn có hiệu lực).
         Configure<CarDealership.CoreService.Middleware.EdgeKeyOptions>(options =>
@@ -141,7 +146,8 @@ public class CoreServiceHttpApiHostModule : AbpModule
         app.UseAbpRequestLocalization();
         app.UseRouting();
         app.UseCors();
-        // app.UseAuthentication();  // sẽ bật ở Ngày 37 khi có JWT ES256
+        // Ngày 37: xác thực JWT dịch vụ (bật lại; trước đó để chờ JWT ES256). Đứng sau Edge key, trước authorization.
+        app.UseAuthentication();
 
         if (MultiTenancyConsts.IsEnabled)
         {
@@ -149,13 +155,6 @@ public class CoreServiceHttpApiHostModule : AbpModule
         }
         app.UseUnitOfWork();
         app.UseAuthorization();
-
-        // Ngày 14: /health/ready kiểm DB (check có tag "ready"). Lỗi -> 503.
-        // Đặt sau UoW để DbContext/UnitOfWork sẵn sàng cho DatabaseHealthCheck.
-        app.UseHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-        {
-            Predicate = check => check.Tags.Contains("ready")
-        });
 
         // Ngày 22: Swagger UI và swagger.json CHỈ bật ở Development (design: "Swagger UI chỉ bật
         // ở dev", Req 29.5). Ở môi trường khác (compose mặc định là Production) không phục vụ
@@ -176,6 +175,17 @@ public class CoreServiceHttpApiHostModule : AbpModule
         // app.UseConfiguredEndpoints() vì ABP tự thêm route quy ước {controller=Home}/{action=Index}/{id?}
         // (cả bản có {area}) và Razor Pages: controller nào quên [Route] sẽ tự lộ ra ở /Ten/Action.
         // Nếu sau này module cần endpoint do ABP đăng ký (SignalR, dashboard...) thì thêm có chủ đích.
-        app.UseEndpoints(endpoints => endpoints.MapControllers());
+        app.UseEndpoints(endpoints =>
+        {
+            endpoints.MapControllers();
+
+            // Ngày 14: /health/ready kiểm DB (check có tag "ready"). Lỗi -> 503.
+            // Ngày 37: chuyển từ middleware sang ENDPOINT để chịu fallback policy ServiceBff (design: /health/ready cần
+            // Edge key + JWT; chỉ /health/live được miễn). Vẫn nằm sau UoW nên DbContext sẵn sàng cho DatabaseHealthCheck.
+            endpoints.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready")
+            });
+        });
     }
 }

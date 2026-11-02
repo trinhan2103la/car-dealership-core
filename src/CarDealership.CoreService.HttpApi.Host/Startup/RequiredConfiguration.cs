@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CarDealership.CoreService.Auth;
 using CarDealership.CoreService.Middleware;
 using Microsoft.Extensions.Configuration;
 
@@ -29,6 +30,15 @@ public static class RequiredConfiguration
         else if (edgeKey.Length < EdgeKeyOptions.MinLength)
         {
             problems.Add($"{EdgeKeyOptions.VariableName}: ngắn hơn {EdgeKeyOptions.MinLength} ký tự");
+        }
+
+        // Ngày 37: khóa công khai ES256 để kiểm JWT của BFF. Chỉ nêu lý do, KHÔNG bao giờ in nội dung khóa.
+        using (var key = ServiceCredentialKey.TryParse(configuration[ServiceCredential.PublicKeyVariable], out var keyProblem))
+        {
+            if (key is null)
+            {
+                problems.Add($"{ServiceCredential.PublicKeyVariable}: {keyProblem}");
+            }
         }
 
         return problems;
