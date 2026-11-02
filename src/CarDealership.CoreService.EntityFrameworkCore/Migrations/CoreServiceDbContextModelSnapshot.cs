@@ -24,6 +24,38 @@ namespace CarDealership.CoreService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CarDealership.CoreService.Identity.Login.LoginAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AttemptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("attempted_at");
+
+                    b.Property<string>("NormalizedEmail")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean")
+                        .HasColumnName("succeeded");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail", "AttemptedAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_idn_login_attempts_email_attempted_at");
+
+                    b.ToTable("idn_login_attempts", (string)null);
+                });
+
             modelBuilder.Entity("CarDealership.CoreService.Identity.Sessions.AdminSession", b =>
                 {
                     b.Property<Guid>("Id")

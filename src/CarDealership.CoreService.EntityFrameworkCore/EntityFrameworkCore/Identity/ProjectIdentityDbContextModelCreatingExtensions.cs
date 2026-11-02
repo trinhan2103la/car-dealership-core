@@ -1,3 +1,4 @@
+using CarDealership.CoreService.Identity.Login;
 using CarDealership.CoreService.Identity.Sessions;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp;
@@ -45,6 +46,26 @@ public static class ProjectIdentityDbContextModelCreatingExtensions
             // Thu hồi mọi session còn hiệu lực của một user (vô hiệu hóa tài khoản).
             b.HasIndex(x => x.UserId).HasDatabaseName("ix_idn_admin_sessions_user_active")
                 .HasFilter("revoked_at IS NULL");
+        });
+
+        // Ngày 31 (Req 14.1, 14.4): lịch sử đăng nhập để LoginAttemptPolicy phát lại. user_id không FK (khác module,
+        // và null khi email không tồn tại).
+        builder.Entity<LoginAttempt>(b =>
+        {
+            b.ToTable(TablePrefix + "login_attempts");
+
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.NormalizedEmail).HasColumnName("normalized_email").HasColumnType("text").IsRequired();
+            b.Property(x => x.UserId).HasColumnName("user_id");
+            b.Property(x => x.Succeeded).HasColumnName("succeeded").IsRequired();
+            // Cùng lý do với AdminSession: switch legacy của Npgsql trả Kind=Local, ép về UTC khi đọc.
+            b.Property(x => x.AttemptedAt).HasColumnName("attempted_at").HasColumnType("timestamp with time zone").IsRequired()
+                .HasConversion(v => v, v => v.ToUniversalTime());
+
+            b.HasIndex(x => new { x.NormalizedEmail, x.AttemptedAt })
+                .IsDescending(false, true)
+                .HasDatabaseName("ix_idn_login_attempts_email_attempted_at");
         });
     }
 }
