@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +23,8 @@ namespace CarDealership.CoreService.Middleware.Tests;
 /// </summary>
 public class EdgeKeyMiddlewareTests
 {
-    private const string Key = "unit-edge-key-0123456789abcdef0123456789abcdef";
+    // Ngẫu nhiên mỗi lần chạy: không để chuỗi giống bí mật trong mã nguồn (gitleaks).
+    private static readonly string Key = "unit-" + Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(24)).ToLowerInvariant();
 
     private sealed class CapturedLog
     {
@@ -67,20 +68,23 @@ public class EdgeKeyMiddlewareTests
         }
     }
 
+    // Dấu hiệu "dùng khóa mặc định của test" (tham số mặc định phải là hằng số, mà Key giờ sinh ngẫu nhiên lúc chạy).
+    private const string UseDefaultKey = "\u0000use-default-key";
+
     private sealed record Result(HttpResponseMessage Response, string Body, CapturingProvider Log);
 
     private static async Task<Result> SendAsync(
         HttpMethod method,
         string pathAndQuery,
         Action<HttpRequestMessage>? configure = null,
-        string? serverKey = Key)
+        string? serverKey = UseDefaultKey)
     {
         var provider = new CapturingProvider();
         using var host = await new HostBuilder()
             .ConfigureLogging(l => l.ClearProviders().SetMinimumLevel(LogLevel.Trace).AddProvider(provider))
             .ConfigureWebHost(web => web
                 .UseTestServer()
-                .ConfigureServices(s => s.Configure<EdgeKeyOptions>(o => o.Key = serverKey))
+                .ConfigureServices(s => s.Configure<EdgeKeyOptions>(o => o.Key = serverKey == UseDefaultKey ? Key : serverKey))
                 .Configure(app =>
                 {
                     app.UseMiddleware<EdgeKeyMiddleware>();

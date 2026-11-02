@@ -1,4 +1,6 @@
+﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
@@ -9,11 +11,13 @@ namespace CarDealership.CoreService;
 /// <summary>
 /// Cấp thông tin xác thực cho host test. Core_API từ chối request thiếu X-Edge-Key (Ngày 36, trừ GET /health/live) và
 /// thiếu service JWT hợp lệ (Ngày 37), nên client mặc định của factory tự kèm cả hai; test muốn thử "thiếu" thì
-/// gỡ header khỏi client. Các giá trị này CHỈ để test, không phải bí mật.
+/// gỡ header khỏi client. Các giá trị này CHỈ để test (sinh ngẫu nhiên mỗi lần chạy), không phải bí mật.
 /// </summary>
 public static class EdgeKeyTesting
 {
-    public const string Key = "test-edge-key-0123456789abcdef0123456789abcdef";
+    // Sinh NGẪU NHIÊN mỗi lần chạy test (không có chuỗi giống bí mật nào nằm trong mã nguồn nên gitleaks không báo, và cũng
+    // không có "khóa test" cố định nào để ai đó dùng nhầm). 24 byte -> 48 ký tự hex, ≥ 32 ký tự để qua kiểm tra khởi động.
+    public static readonly string Key = "edge-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(24)).ToLowerInvariant();
     public const string Header = "X-Edge-Key";
 
     public static void UseKey(IWebHostBuilder builder, string? key) =>
@@ -30,9 +34,9 @@ public static class EdgeKeyTesting
             }));
     }
 
-    public static void AddDefaultHeader(HttpClient client, string key = Key)
+    public static void AddDefaultHeader(HttpClient client, string? key = null)
     {
-        client.DefaultRequestHeaders.TryAddWithoutValidation(Header, key);
+        client.DefaultRequestHeaders.TryAddWithoutValidation(Header, key ?? Key);
         // Token sống 60 giây, tạo lúc dựng client: đủ cho một test; đừng giữ client qua nhiều phút.
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestServiceJwt.Create());
     }
