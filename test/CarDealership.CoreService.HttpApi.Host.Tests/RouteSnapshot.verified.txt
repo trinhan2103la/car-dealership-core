@@ -1,6 +1,10 @@
 # Snapshot route khai báo tường minh (Req 29.5). Mỗi dòng là một route pattern.
-# Hiện KHÔNG có route nào: chưa có controller của dự án, và HomeController (redirect sang
-# /swagger) đã bị xóa ở Ngày 22.
-# /health/live và /health/ready không nằm ở đây vì đăng ký bằng app.UseHealthChecks(...)
-# (middleware), không phải endpoint routing.
+# Ngày 33: thêm POST /api/app/auth/sessions (đăng nhập, SessionController).
+# Ngày 34: thêm GET + DELETE /api/app/auth/sessions/current (pattern chung, hai method).
+# Controller của module ABP đã bị HideAbpModuleControllersConvention gỡ; HomeController đã xóa ở Ngày 22.
+# Ngày 37: /health/ready giờ là ENDPOINT (MapHealthChecks) để chịu fallback policy ServiceBff (cần Edge key + JWT).
+# /health/live vẫn là middleware (app.UseHealthChecks) nên không nằm ở đây: được miễn Edge key và JWT.
 # Thêm controller mới => test đỏ cho tới khi route xuất hiện ở file này (cập nhật có chủ đích).
+/api/app/auth/sessions
+/api/app/auth/sessions/current
+/health/ready

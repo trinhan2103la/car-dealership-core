@@ -1,4 +1,4 @@
-# car-dealership-core
+﻿# car-dealership-core
 
 Core API (ABP Framework 10.7 / .NET 10) của dự án **Car Dealership Platform** — tầng duy nhất thực thi quy tắc nghiệp vụ, truy cập PostgreSQL qua EF Core. Repo này cũng chứa Docker Compose xuyên service để chạy toàn hệ local.
 
@@ -70,6 +70,58 @@ một SuperAdmin đầu tiên. Tài khoản này lấy từ biến môi trườn
 Đặt hai biến trong `deploy/.env` (xem `deploy/.env.example`) **trước** khi `up -d --build`. Thiếu hoặc sai thì migrator
 dừng với exit code khác 0, thông báo chỉ nêu tên biến (không in giá trị) và không ghi gì vào DB. Nếu email đã tồn tại,
 tài khoản và mật khẩu được giữ nguyên.
+
+### Dùng DB riêng ở local (đổi tên DB, mật khẩu)
+
+`deploy/.env` (đã gitignore) quyết định tên DB, user, mật khẩu của container Postgres, ví dụ `POSTGRES_DB=car_dealership_local`.
+Image Postgres chỉ tạo DB ở lần khởi tạo đầu của volume, nên đổi `POSTGRES_DB` khi volume đã có thì phải `down -v` rồi `up -d postgres` lại.
+Thêm một DB khác trong cùng container: `docker exec -it cdp-postgres psql -U <user> -d postgres -c "CREATE DATABASE <ten>;"`, rồi chạy migrator với
+chuỗi kết nối trỏ vào DB đó. Cổng Postgres chỉ mở trên `127.0.0.1`.
+
+Host và migrator đọc chuỗi kết nối từ biến môi trường, không sửa `appsettings.json`:
+
+```powershell
+$env:ConnectionStrings__Default = 'Host=localhost;Port=5432;Database=<ten>;User ID=<user>;Password=<mat khau>;'
+$env:SEED_SUPERADMIN_EMAIL = 'superadmin@example.com'
+$env:SEED_SUPERADMIN_PASSWORD = '<12-128 ky tu, du hoa/thuong/so/ky tu dac biet>'
+$env:EDGE_KEY = '<chuoi ngau nhien >= 32 ky tu, vi du: openssl rand -hex 32>'   # chi host can, migrator khong can
+$env:SERVICE_JWT_PUBLIC_KEY = '<khoa CONG KHAI ES256 P-256: PEM mot dong voi \n, hoac base64 SubjectPublicKeyInfo>'
+dotnet run --project src/CarDealership.CoreService.DbMigrator
+dotnet run --project src/CarDealership.CoreService.HttpApi.Host --no-launch-profile   # ASPNETCORE_URLS=http://127.0.0.1:5099
+```
+
+### Gọi thử API đăng nhập (Ngày 33–34)
+
+Chỉ BFF gọi Core_API trong hệ thống thật. Từ Ngày 36 mọi request (trừ `GET /health/live`) phải kèm header `X-Edge-Key: <giá trị EDGE_KEY>`, thiếu hoặc sai thì nhận **404 rỗng** (giống route không tồn tại). **Từ Ngày 37 mọi request (trừ `GET /health/live`) còn phải kèm `Authorization: Bearer <service JWT>`** do BFF ký bằng khóa riêng ES256; thiếu/sai/hết hạn thì 401, đúng JWT nhưng sai `scope` thì 403 (`scope=bff` cho endpoint thường, `scope=jobs` chỉ cho `/api/jobs/*`). Nên không curl thẳng được nữa nếu không tự ký token; `/health/ready` cũng cần JWT (UptimeRobot chỉ gọi `/health/ready` của BFF).
+
+Quy tắc JWT (ADR-004): thuật toán **chỉ ES256**; `iss=bff`, `aud=core-api`; `exp − iat` ≤ 60 giây; bắt buộc `iat`, `exp`, `jti`; đúng một giá trị `scope`; lệch đồng hồ cho phép 5 giây. `SERVICE_JWT_PUBLIC_KEY` là biến **bắt buộc** của host (PEM hoặc base64 SPKI, đường cong P-256): thiếu, sai định dạng, sai đường cong hoặc là khóa **riêng** thì process thoát mã 1 và chỉ log tên biến. Khóa riêng chỉ nằm ở BFF (`SERVICE_JWT_PRIVATE_KEY` trong `car-dealership-bff/.env`, đã gitignore).
+
+Endpoint mới dưới `/api/jobs/*` tự động dùng policy `ServiceJobs` (convention), endpoint nào quên khai báo bảo mật rơi vào policy mặc định `ServiceBff` thay vì mở công khai; muốn mở công khai phải ghi `[AllowAnonymous]` có chủ đích.
+
+`EDGE_KEY` là biến môi trường **bắt buộc** của host: thiếu hoặc ngắn hơn 32 ký tự thì process thoát mã 1 ngay khi khởi động và log tên biến (không in giá trị). Trong `deploy/.env` đặt `EDGE_KEY=...` cho `core-api` của compose. Chạy host từ Rider/IDE thì thêm `EDGE_KEY` vào biến môi trường của cấu hình chạy.
+
+```powershell
+curl.exe -s -H "X-Edge-Key: $env:EDGE_KEY" -H "Authorization: Bearer $env:SERVICE_JWT" http://127.0.0.1:5099/health/ready   # SERVICE_JWT: token ES256 do BFF ký (Ngày 38)
+```
+
+| Method | Route                            | Ý nghĩa                                                                                                                |
+| ------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/app/auth/sessions`         | Đăng nhập `{email, password}` → 200 `{sessionId, userId, email, roles, permissions}`; mọi thất bại → 401 cùng một body |
+| GET    | `/api/app/auth/sessions/current` | Header `X-Admin-Session: <sessionId>` → danh tính + quyền, trượt cửa sổ idle 30 phút                                   |
+| DELETE | `/api/app/auth/sessions/current` | Cùng header → đăng xuất, 204                                                                                           |
+
+Sai 5 lần liên tiếp trong 15 phút thì email đó bị khóa 15 phút (kể cả khi đúng mật khẩu). Session hết hạn sau 30 phút không hoạt động hoặc khi user bị Inactive.
+
+### Chạy test
+
+```powershell
+dotnet test CarDealership.CoreService.slnx -c Release
+```
+
+- Test EF Core dùng Testcontainers nên **cần Docker đang chạy** (đỏ nếu Docker tắt, không tự bỏ qua).
+- Test Host cần PostgreSQL ở `localhost:5432` đã migrate. Nếu DB của bạn khác mặc định trong `appsettings.json` (`cdp`), đặt
+  `ConnectionStrings__Default` trỏ đúng DB trước khi chạy, nếu không sẽ lỗi `28P01 password authentication failed`.
+- Cổng 5432 đóng (không có Postgres) thì các test cần DB **tự bỏ qua và vẫn hiện xanh**. Muốn chắc chúng chạy thật, bật Postgres và migrate trước.
 
 ## Kiểm tra package ABP (giấy phép)
 

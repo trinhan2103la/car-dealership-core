@@ -26,6 +26,9 @@ public class IdentityDomainModule : AbpModule
         Configure<IdentityOptions>(options =>
         {
             options.Password.RequiredLength = PasswordPolicy.MinLength;
+
+            // Ngày 31: LoginAttemptPolicy là nguồn sự thật duy nhất cho khóa đăng nhập.
+            options.Lockout.AllowedForNewUsers = false;
         });
 
         // Giữ cả hai biên 12–128 bất kể cấu hình/setting (ASP.NET Identity không có độ dài tối đa).

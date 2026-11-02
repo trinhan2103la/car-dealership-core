@@ -12,6 +12,7 @@ using CarDealership.CoreService.EntityFrameworkCore.Catalog;
 using CarDealership.CoreService.EntityFrameworkCore.Showrooms;
 using CarDealership.CoreService.EntityFrameworkCore.Leads;
 using CarDealership.CoreService.EntityFrameworkCore.Identity;
+using CarDealership.CoreService.Identity.Login;
 using CarDealership.CoreService.Identity.Sessions;
 using CarDealership.CoreService.EntityFrameworkCore.Settings;
 using CarDealership.CoreService.EntityFrameworkCore.Audit;
@@ -48,6 +49,7 @@ public class CoreServiceDbContext :
 
     //Ngày 30: module Identity của dự án (idn_*)
     public DbSet<AdminSession> AdminSessions { get; set; }
+    public DbSet<LoginAttempt> LoginAttempts { get; set; }
 
     #endregion
 

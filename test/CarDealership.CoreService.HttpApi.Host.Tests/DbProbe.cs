@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Sockets;
 using Npgsql;
 
@@ -14,13 +14,30 @@ namespace CarDealership.CoreService;
 /// </summary>
 public static class DbProbe
 {
+    static DbProbe()
+    {
+        // Npgsql đọc công tắc này MỘT LẦN khi khởi tạo kiểu tĩnh. Probe mở kết nối TRƯỚC khi host dựng (host mới đặt công tắc
+        // ở PreConfigureServices), nên không đặt ở đây thì cả process test chạy ở chế độ timestamp mới và mọi INSERT
+        // DateTime Kind=Utc vào cột "timestamp without time zone" của ABP (AbpAuditLogs) đều lỗi 500.
+        // Production không bị: Program/host đặt công tắc trước khi chạm Npgsql.
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+    }
+
     private const string DefaultConnectionString =
         "Host=localhost;Port=5432;Database=cdp;User ID=cdp;Password=cdp_dev_pw;Timeout=5;";
 
     public static bool IsMigratedDatabaseAvailable()
     {
-        if (!IsPortOpen("localhost", 5432))
+        if (!IsPortOpen("127.0.0.1", 5432))
         {
+            // Trên CI, "không có DB" là LỖI chứ không được bỏ qua: nếu không, mọi test cần DB sẽ lặng lẽ xanh giả.
+            if (string.Equals(Environment.GetEnvironmentVariable("REQUIRE_DB_TESTS"), "true", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "REQUIRE_DB_TESTS=true nhung khong ket noi duoc PostgreSQL o 127.0.0.1:5432. " +
+                    "Test can DB khong duoc phep bi bo qua tren CI.");
+            }
+
             return false;
         }
 
@@ -44,6 +61,8 @@ public static class DbProbe
         return true;
     }
 
+    // Dò bằng IPv4 tường minh: "localhost" thử ::1 trước và ăn hết 300 ms, nên khi compose chỉ mở cổng trên 127.0.0.1
+    // thì probe báo "cổng đóng" và MỌI test cần DB lặng lẽ bị bỏ qua (xanh giả). Đã gặp ở Ngày 33.
     private static bool IsPortOpen(string host, int port, int timeoutMs = 300)
     {
         try

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Volo.Abp;
 using Volo.Abp.Authorization;
 using Volo.Abp.Autofac;
@@ -25,6 +26,11 @@ public class CoreServiceTestBaseModule : AbpModule
         });
 
         context.Services.AddAlwaysAllowAuthorization();
+
+        // Ngày 33: đồng hồ dịch chuyển được cho test mốc 15 phút / 30 phút.
+        context.Services.AddSingleton<TestClock>();
+        context.Services.Replace(ServiceDescriptor.Singleton<Volo.Abp.Timing.IClock>(
+            sp => sp.GetRequiredService<TestClock>()));
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
