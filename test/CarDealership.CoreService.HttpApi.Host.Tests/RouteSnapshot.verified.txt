@@ -1,7 +1,9 @@
 # Snapshot route khai báo tường minh (Req 29.5). Mỗi dòng là một route pattern.
-# Ngày 33: thêm POST /api/app/auth/sessions (đăng nhập, SessionController). Đúng 1 route.
+# Ngày 33: thêm POST /api/app/auth/sessions (đăng nhập, SessionController).
+# Ngày 34: thêm GET + DELETE /api/app/auth/sessions/current (pattern chung, hai method).
 # Controller của module ABP đã bị HideAbpModuleControllersConvention gỡ; HomeController đã xóa ở Ngày 22.
 # /health/live và /health/ready không nằm ở đây vì đăng ký bằng app.UseHealthChecks(...)
 # (middleware), không phải endpoint routing.
 # Thêm controller mới => test đỏ cho tới khi route xuất hiện ở file này (cập nhật có chủ đích).
 /api/app/auth/sessions
+/api/app/auth/sessions/current

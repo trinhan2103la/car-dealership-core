@@ -18,6 +18,36 @@ public class AdminSession : Entity<Guid>
 
     public bool IsRevoked => RevokedAt.HasValue;
 
+    /// <summary>Req 14.7: còn dùng được tại <paramref name="nowUtc"/> khi chưa bị thu hồi và chưa quá hạn không hoạt động.</summary>
+    public bool IsActiveAt(DateTime nowUtc)
+    {
+        EnsureUtc(nowUtc);
+        return !IsRevoked && SessionLifetime.IsWithinIdleTimeout(LastSeenAt, nowUtc);
+    }
+
+    /// <summary>Ghi nhận một request đã xác thực (trượt cửa sổ idle). Chỉ gọi khi <see cref="IsActiveAt"/> đúng.</summary>
+    public void Touch(DateTime nowUtc)
+    {
+        EnsureUtc(nowUtc);
+        if (!IsActiveAt(nowUtc))
+        {
+            throw new InvalidOperationException("Không thể gia hạn session đã hết hạn hoặc bị thu hồi.");
+        }
+
+        // Không bao giờ lùi lại (đồng hồ lệch giữa hai request song song).
+        if (nowUtc > LastSeenAt)
+        {
+            LastSeenAt = nowUtc;
+        }
+    }
+
+    /// <summary>Thu hồi (đăng xuất / user Inactive). Idempotent: giữ nguyên thời điểm thu hồi đầu tiên.</summary>
+    public void Revoke(DateTime nowUtc)
+    {
+        EnsureUtc(nowUtc);
+        RevokedAt ??= nowUtc;
+    }
+
     private AdminSession()
     {
         // EF Core

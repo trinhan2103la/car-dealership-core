@@ -17,6 +17,7 @@ namespace CarDealership.CoreService.Routing;
 public class LoginEndpointTests : IClassFixture<CoreServiceWebApplicationFactory>
 {
     private const string Url = "/api/app/auth/sessions";
+    private const string CurrentUrl = "/api/app/auth/sessions/current";
     private readonly CoreServiceWebApplicationFactory _factory;
 
     public LoginEndpointTests(CoreServiceWebApplicationFactory factory)
@@ -74,6 +75,46 @@ public class LoginEndpointTests : IClassFixture<CoreServiceWebApplicationFactory
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await client.PostAsJsonAsync(Url, new { email = RandomEmail(), password = new string('p', 129) }))
             .StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Theory]
+    [InlineData("GET", null)]
+    [InlineData("GET", "rac")]
+    [InlineData("GET", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    [InlineData("DELETE", null)]
+    [InlineData("DELETE", "rac")]
+    [InlineData("DELETE", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
+    public async Task Current_session_without_a_usable_session_id_gets_401_with_one_generic_body(string method, string? header)
+    {
+        if (!DbProbe.IsMigratedDatabaseAvailable())
+        {
+            return;
+        }
+
+        var request = new HttpRequestMessage(new HttpMethod(method), CurrentUrl);
+        if (header is not null)
+        {
+            request.Headers.TryAddWithoutValidation("X-Admin-Session", header);
+        }
+
+        var res = await _factory.CreateClient().SendAsync(request);
+
+        res.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await res.Content.ReadAsStringAsync()).ShouldContain("unauthenticated");
+    }
+
+    [Fact]
+    public async Task Post_or_put_on_the_current_session_route_is_405()
+    {
+        if (!DbProbe.IsMigratedDatabaseAvailable())
+        {
+            return;
+        }
+
+        var client = _factory.CreateClient();
+
+        (await client.PostAsJsonAsync(CurrentUrl, new { })).StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
+        (await client.PutAsJsonAsync(CurrentUrl, new { })).StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
     }
 
     [Fact]

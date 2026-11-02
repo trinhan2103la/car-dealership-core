@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Sockets;
 using Npgsql;
 
@@ -28,7 +28,7 @@ public static class DbProbe
 
     public static bool IsMigratedDatabaseAvailable()
     {
-        if (!IsPortOpen("localhost", 5432))
+        if (!IsPortOpen("127.0.0.1", 5432))
         {
             return false;
         }
@@ -53,6 +53,8 @@ public static class DbProbe
         return true;
     }
 
+    // Dò bằng IPv4 tường minh: "localhost" thử ::1 trước và ăn hết 300 ms, nên khi compose chỉ mở cổng trên 127.0.0.1
+    // thì probe báo "cổng đóng" và MỌI test cần DB lặng lẽ bị bỏ qua (xanh giả). Đã gặp ở Ngày 33.
     private static bool IsPortOpen(string host, int port, int timeoutMs = 300)
     {
         try

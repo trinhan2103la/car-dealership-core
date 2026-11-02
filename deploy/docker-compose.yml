@@ -17,7 +17,8 @@ services:
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cdp_dev_pw}
             POSTGRES_DB: ${POSTGRES_DB:-cdp}
         ports:
-            - '${POSTGRES_PORT:-5432}:5432'
+            # Chỉ mở cho máy này (127.0.0.1): mật khẩu dev yếu, không để máy khác trong mạng kết nối được.
+            - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
         volumes:
             # Postgres 18 đổi quy ước: mount ở /var/lib/postgresql (không phải .../data).
             # Dữ liệu sẽ nằm trong subdir theo major version bên trong volume này.

@@ -11,6 +11,8 @@ public static class SecurityEventActions
     public const string LoginSucceeded = "AdminLoginSucceeded";
     public const string LoginFailed = "AdminLoginFailed";
     public const string AccountLockedOut = "AdminAccountLockedOut";
+    public const string Logout = "AdminLogout";
+    public const string SessionsRevoked = "AdminSessionsRevoked";
 }
 
 public static class LoginFailureReasons

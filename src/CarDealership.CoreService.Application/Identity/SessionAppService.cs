@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -48,6 +48,7 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
     private readonly IRepository<AdminSession, Guid> _sessions;
     private readonly IPermissionManager _permissionManager;
     private readonly ISecurityEventWriter _events;
+    private readonly SessionResolver _resolver;
 
     public SessionAppService(
         IdentityUserManager userManager,
@@ -55,7 +56,8 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
         IRepository<LoginAttempt, Guid> attempts,
         IRepository<AdminSession, Guid> sessions,
         IPermissionManager permissionManager,
-        ISecurityEventWriter events)
+        ISecurityEventWriter events,
+        SessionResolver resolver)
     {
         _userManager = userManager;
         _passwordHasher = passwordHasher;
@@ -63,6 +65,7 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
         _sessions = sessions;
         _permissionManager = permissionManager;
         _events = events;
+        _resolver = resolver;
     }
 
     public virtual async Task<LoginResultDto?> LoginAsync(LoginInput input)
@@ -84,6 +87,57 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
         }
     }
 
+    public virtual async Task<CurrentSessionDto?> GetCurrentAsync(string? sessionId)
+    {
+        var resolved = await _resolver.ResolveAsync(sessionId);
+        if (resolved is null)
+        {
+            return null;
+        }
+
+        var user = await _userManager.FindByIdAsync(resolved.UserId.ToString());
+        if (user is null)
+        {
+            return null;
+        }
+
+        var roles = (await _userManager.GetRolesAsync(user)).OrderBy(r => r, StringComparer.Ordinal).ToList();
+
+        return new CurrentSessionDto
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            Roles = roles,
+            Permissions = await GetPermissionsAsync(roles)
+        };
+    }
+
+    public virtual async Task<bool> LogoutAsync(string? sessionId)
+    {
+        if (!SessionToken.IsWellFormed(sessionId))
+        {
+            return false;
+        }
+
+        var now = Clock.Now;
+
+        using var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+
+        var session = await _resolver.FindAsync(sessionId!);
+        if (session is null || !session.IsActiveAt(now))
+        {
+            return false;   // không hoàn tất UoW: không ghi gì
+        }
+
+        var user = await _userManager.FindByIdAsync(session.UserId.ToString());
+
+        session.Revoke(now);
+        await _sessions.UpdateAsync(session, autoSave: true);
+        await _events.WriteAsync(SecurityEventActions.Logout, user?.Email, session.UserId, reason: null);
+        await uow.CompleteAsync();
+
+        return true;
+    }
     private async Task<LoginResultDto?> LoginCoreAsync(string email, string normalized, string password)
     {
         var now = Clock.Now;
