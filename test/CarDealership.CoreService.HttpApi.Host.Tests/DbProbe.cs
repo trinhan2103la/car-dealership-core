@@ -30,6 +30,14 @@ public static class DbProbe
     {
         if (!IsPortOpen("127.0.0.1", 5432))
         {
+            // Trên CI, "không có DB" là LỖI chứ không được bỏ qua: nếu không, mọi test cần DB sẽ lặng lẽ xanh giả.
+            if (string.Equals(Environment.GetEnvironmentVariable("REQUIRE_DB_TESTS"), "true", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "REQUIRE_DB_TESTS=true nhung khong ket noi duoc PostgreSQL o 127.0.0.1:5432. " +
+                    "Test can DB khong duoc phep bi bo qua tren CI.");
+            }
+
             return false;
         }
 

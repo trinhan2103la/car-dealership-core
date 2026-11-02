@@ -71,6 +71,46 @@ một SuperAdmin đầu tiên. Tài khoản này lấy từ biến môi trườn
 dừng với exit code khác 0, thông báo chỉ nêu tên biến (không in giá trị) và không ghi gì vào DB. Nếu email đã tồn tại,
 tài khoản và mật khẩu được giữ nguyên.
 
+### Dùng DB riêng ở local (đổi tên DB, mật khẩu)
+
+`deploy/.env` (đã gitignore) quyết định tên DB, user, mật khẩu của container Postgres, ví dụ `POSTGRES_DB=car_dealership_local`.
+Image Postgres chỉ tạo DB ở lần khởi tạo đầu của volume, nên đổi `POSTGRES_DB` khi volume đã có thì phải `down -v` rồi `up -d postgres` lại.
+Thêm một DB khác trong cùng container: `docker exec -it cdp-postgres psql -U <user> -d postgres -c "CREATE DATABASE <ten>;"`, rồi chạy migrator với
+chuỗi kết nối trỏ vào DB đó. Cổng Postgres chỉ mở trên `127.0.0.1`.
+
+Host và migrator đọc chuỗi kết nối từ biến môi trường, không sửa `appsettings.json`:
+
+```powershell
+$env:ConnectionStrings__Default = 'Host=localhost;Port=5432;Database=<ten>;User ID=<user>;Password=<mat khau>;'
+$env:SEED_SUPERADMIN_EMAIL = 'superadmin@example.com'
+$env:SEED_SUPERADMIN_PASSWORD = '<12-128 ky tu, du hoa/thuong/so/ky tu dac biet>'
+dotnet run --project src/CarDealership.CoreService.DbMigrator
+dotnet run --project src/CarDealership.CoreService.HttpApi.Host --no-launch-profile   # ASPNETCORE_URLS=http://127.0.0.1:5099
+```
+
+### Gọi thử API đăng nhập (Ngày 33–34)
+
+Chỉ BFF gọi Core_API trong hệ thống thật; từ Ngày 36–37 Core_API sẽ đòi `X-Edge-Key` và JWT nên không curl thẳng được nữa.
+
+| Method | Route                            | Ý nghĩa                                                                                                                |
+| ------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/api/app/auth/sessions`         | Đăng nhập `{email, password}` → 200 `{sessionId, userId, email, roles, permissions}`; mọi thất bại → 401 cùng một body |
+| GET    | `/api/app/auth/sessions/current` | Header `X-Admin-Session: <sessionId>` → danh tính + quyền, trượt cửa sổ idle 30 phút                                   |
+| DELETE | `/api/app/auth/sessions/current` | Cùng header → đăng xuất, 204                                                                                           |
+
+Sai 5 lần liên tiếp trong 15 phút thì email đó bị khóa 15 phút (kể cả khi đúng mật khẩu). Session hết hạn sau 30 phút không hoạt động hoặc khi user bị Inactive.
+
+### Chạy test
+
+```powershell
+dotnet test CarDealership.CoreService.slnx -c Release
+```
+
+- Test EF Core dùng Testcontainers nên **cần Docker đang chạy** (đỏ nếu Docker tắt, không tự bỏ qua).
+- Test Host cần PostgreSQL ở `localhost:5432` đã migrate. Nếu DB của bạn khác mặc định trong `appsettings.json` (`cdp`), đặt
+  `ConnectionStrings__Default` trỏ đúng DB trước khi chạy, nếu không sẽ lỗi `28P01 password authentication failed`.
+- Cổng 5432 đóng (không có Postgres) thì các test cần DB **tự bỏ qua và vẫn hiện xanh**. Muốn chắc chúng chạy thật, bật Postgres và migrate trước.
+
 ## Kiểm tra package ABP (giấy phép)
 
 Chỉ dùng ABP open-source. Script chặn package thương mại (`.Pro.`, `Commercial`, `Volo.Saas`...) và

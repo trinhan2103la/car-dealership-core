@@ -30,6 +30,8 @@ jobs:
                     --health-retries 10
         env:
             ConnectionStrings__Default: 'Host=localhost;Port=5432;Database=cdp;User ID=cdp;Password=cdp_dev_pw;'
+            # Test Host cần DB thật: trên CI thiếu DB phải đỏ, không được tự bỏ qua (xanh giả).
+            REQUIRE_DB_TESTS: 'true'
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-dotnet@v4
@@ -48,7 +50,8 @@ jobs:
               run: |
                   # Req 25.6: không có mật khẩu mặc định trong mã nguồn. Sinh ngẫu nhiên mỗi lần chạy, chỉ sống trong job.
                   # Tiền tố Aa1! đảm bảo đủ hoa/thường/số/ký tự đặc biệt (luật Ngày 24); hex 32 ký tự đảm bảo độ dài.
-                  export SEED_SUPERADMIN_PASSWORD="Aa1!$(openssl rand -hex 16)"
+                  SEED_SUPERADMIN_PASSWORD="Aa1!$(openssl rand -hex 16)"
+                  export SEED_SUPERADMIN_PASSWORD
                   dotnet run --project src/CarDealership.CoreService.DbMigrator -c Release --no-build
             - name: Test
               run: dotnet test CarDealership.CoreService.slnx -c Release --no-build --verbosity normal
