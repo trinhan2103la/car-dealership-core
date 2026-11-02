@@ -1,4 +1,4 @@
-# car-dealership-core
+﻿# car-dealership-core
 
 Core API (ABP Framework 10.7 / .NET 10) của dự án **Car Dealership Platform** — tầng duy nhất thực thi quy tắc nghiệp vụ, truy cập PostgreSQL qua EF Core. Repo này cũng chứa Docker Compose xuyên service để chạy toàn hệ local.
 
@@ -84,13 +84,20 @@ Host và migrator đọc chuỗi kết nối từ biến môi trường, không 
 $env:ConnectionStrings__Default = 'Host=localhost;Port=5432;Database=<ten>;User ID=<user>;Password=<mat khau>;'
 $env:SEED_SUPERADMIN_EMAIL = 'superadmin@example.com'
 $env:SEED_SUPERADMIN_PASSWORD = '<12-128 ky tu, du hoa/thuong/so/ky tu dac biet>'
+$env:EDGE_KEY = '<chuoi ngau nhien >= 32 ky tu, vi du: openssl rand -hex 32>'   # chi host can, migrator khong can
 dotnet run --project src/CarDealership.CoreService.DbMigrator
 dotnet run --project src/CarDealership.CoreService.HttpApi.Host --no-launch-profile   # ASPNETCORE_URLS=http://127.0.0.1:5099
 ```
 
 ### Gọi thử API đăng nhập (Ngày 33–34)
 
-Chỉ BFF gọi Core_API trong hệ thống thật; từ Ngày 36–37 Core_API sẽ đòi `X-Edge-Key` và JWT nên không curl thẳng được nữa.
+Chỉ BFF gọi Core_API trong hệ thống thật. Từ Ngày 36 mọi request (trừ `GET /health/live`) phải kèm header `X-Edge-Key: <giá trị EDGE_KEY>`, thiếu hoặc sai thì nhận **404 rỗng** (giống route không tồn tại). Từ Ngày 37 sẽ thêm JWT nên không curl thẳng được nữa.
+
+`EDGE_KEY` là biến môi trường **bắt buộc** của host: thiếu hoặc ngắn hơn 32 ký tự thì process thoát mã 1 ngay khi khởi động và log tên biến (không in giá trị). Trong `deploy/.env` đặt `EDGE_KEY=...` cho `core-api` của compose. Chạy host từ Rider/IDE thì thêm `EDGE_KEY` vào biến môi trường của cấu hình chạy.
+
+```powershell
+curl.exe -s -H "X-Edge-Key: $env:EDGE_KEY" http://127.0.0.1:5099/health/ready
+```
 
 | Method | Route                            | Ý nghĩa                                                                                                                |
 | ------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |

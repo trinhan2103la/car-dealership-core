@@ -69,6 +69,9 @@ services:
             ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
             # App:SelfUrl mặc định là https://localhost:44382 (dev); override cho container.
             App__SelfUrl: ${CORE_API_SELF_URL:-http://localhost:8080}
+            # Ngày 36 (Req 28.12, 16.12): khóa Edge, BẮT BUỘC (≥ 32 ký tự). Để trống thì core-api thoát mã khác 0 ngay khi
+            # khởi động và log tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
+            EDGE_KEY: ${EDGE_KEY:-}
         ports:
             - '${CORE_API_PORT:-8080}:8080'
         restart: unless-stopped

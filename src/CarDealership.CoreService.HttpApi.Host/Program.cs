@@ -20,6 +20,10 @@ public class Program
             .MinimumLevel.Information()
 #endif
             .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+            // Ngày 36: "Request starting ... {Path}{QueryString}" của framework ghi NGUYÊN query string (không qua LogRedaction),
+            // nên một khóa/token gửi nhầm vào URL sẽ lọt vào log. Một dòng log mỗi request đã có từ UseSerilogRequestLogging
+            // (path đã che query nhạy cảm), nên tắt dòng thô này.
+            .MinimumLevel.Override("Microsoft.AspNetCore.Hosting.Diagnostics", LogEventLevel.Warning)
             .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
             .Enrich.FromLogContext()
             // Ngày 11: log JSON có cấu trúc (CompactJsonFormatter). Service name = core-api.
