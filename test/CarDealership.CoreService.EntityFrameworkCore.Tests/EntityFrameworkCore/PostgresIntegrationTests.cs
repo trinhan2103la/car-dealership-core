@@ -10,7 +10,7 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.EntityFrameworkCore;
 
 /// <summary>
-/// Ngày 25: chứng minh test EF Core chạy trên PostgreSQL 18 thật (container) và dữ liệu được reset giữa các test.
+/// Chứng minh test EF Core chạy trên PostgreSQL 18 thật (container) và dữ liệu được reset giữa các test.
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
 [Trait("Category", "Integration")]

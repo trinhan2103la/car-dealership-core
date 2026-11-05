@@ -8,7 +8,7 @@ using Xunit;
 namespace CarDealership.CoreService.Architecture;
 
 /// <summary>
-/// Ngày 16 (ADR-003, Req 28.1, 28.8): kiểm ranh giới 7 module nghiệp vụ.
+/// Kiểm ranh giới 7 module nghiệp vụ.
 /// Ranh giới không do compiler bảo đảm (dùng chung project Domain), nên khóa bằng NetArchTest:
 ///  - Mỗi module không được phụ thuộc trực tiếp vào namespace nội bộ của module khác;
 ///    liên kết chỉ qua *.Application.Contracts.&lt;Module&gt; (thêm ở các phase sau) hoặc Domain.Shared.
@@ -18,7 +18,7 @@ public class ModuleBoundaryTests
 {
     private const string Root = "CarDealership.CoreService";
 
-    // 7 module nghiệp vụ (ADR-003). Dùng namespace gốc của module trong project Domain.
+    // 7 module nghiệp vụ. Dùng namespace gốc của module trong project Domain.
     private static readonly string[] Modules =
     {
         "Catalog", "Showrooms", "Leads", "Identity", "Settings", "Audit", "Analytics"

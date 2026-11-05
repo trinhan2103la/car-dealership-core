@@ -1,4 +1,4 @@
-# Ngày 15: image Core_API (ABP layered, .NET 10). Multi-stage, chạy user non-root.
+# Image Core_API (ABP layered, .NET 10). Multi-stage, chạy user non-root.
 # Build từ ROOT repo car-dealership-core:
 #   docker build -f Dockerfile -t cdp-core-api .
 

@@ -9,8 +9,8 @@ using Microsoft.Extensions.Configuration;
 namespace CarDealership.CoreService;
 
 /// <summary>
-/// Cấp thông tin xác thực cho host test. Core_API từ chối request thiếu X-Edge-Key (Ngày 36, trừ GET /health/live) và
-/// thiếu service JWT hợp lệ (Ngày 37), nên client mặc định của factory tự kèm cả hai; test muốn thử "thiếu" thì
+/// Cấp thông tin xác thực cho host test. Core_API từ chối request thiếu X-Edge-Key (trừ GET /health/live) và
+/// thiếu service JWT hợp lệ, nên client mặc định của factory tự kèm cả hai; test muốn thử "thiếu" thì
 /// gỡ header khỏi client. Các giá trị này CHỈ để test (sinh ngẫu nhiên mỗi lần chạy), không phải bí mật.
 /// </summary>
 public static class EdgeKeyTesting
@@ -19,6 +19,9 @@ public static class EdgeKeyTesting
     // không có "khóa test" cố định nào để ai đó dùng nhầm). 24 byte -> 48 ký tự hex, ≥ 32 ký tự để qua kiểm tra khởi động.
     public static readonly string Key = "edge-" + Convert.ToHexString(RandomNumberGenerator.GetBytes(24)).ToLowerInvariant();
     public const string Header = "X-Edge-Key";
+
+    /// <summary>Passphrase mã hóa dùng-một-lần cho host test (biến bắt buộc khi khởi động, như Edge key).</summary>
+    public static readonly string Passphrase = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
 
     public static void UseKey(IWebHostBuilder builder, string? key) =>
         UseConfiguration(builder, key, TestServiceJwt.PublicKeyPem);
@@ -31,6 +34,7 @@ public static class EdgeKeyTesting
             {
                 [CarDealership.CoreService.Middleware.EdgeKeyOptions.VariableName] = edgeKey,
                 [CarDealership.CoreService.Auth.ServiceCredential.PublicKeyVariable] = servicePublicKey,
+                [CarDealership.CoreService.Startup.StringEncryptionOptions.VariableName] = Passphrase,
             }));
     }
 

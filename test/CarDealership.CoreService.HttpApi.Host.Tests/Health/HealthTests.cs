@@ -6,12 +6,12 @@ using Xunit;
 namespace CarDealership.CoreService.Health.Tests;
 
 /// <summary>
-/// Ngày 14 (Req 22, 28.12): hợp đồng health endpoint.
+/// Hợp đồng health endpoint.
 ///  - /health/live: 200, body rỗng, KHÔNG phụ thuộc DB — kiểm được KỂ CẢ khi không có Postgres,
 ///    nhờ đã đặt UseHealthChecks("/health/live") TRƯỚC UseAbpRequestLocalization().
 ///  - /health/ready: cần Postgres thật mới cho kết quả đúng nghĩa; vì localization middleware
 ///    đọc Setting từ DB chạy trước, DB chết sẽ thành 500 chứ không 503. Nên happy-path 200
-///    chỉ chạy khi có DB; case 503 "DB chết sau khi app chạy" để Ngày 25 (Testcontainers).
+///    chỉ chạy khi có DB; case 503 "DB chết sau khi app chạy" cần Testcontainers.
 /// </summary>
 public class HealthTests : IClassFixture<CoreServiceWebApplicationFactory>
 {

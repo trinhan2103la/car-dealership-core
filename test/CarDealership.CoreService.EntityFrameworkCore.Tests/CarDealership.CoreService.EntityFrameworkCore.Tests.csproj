@@ -11,7 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\CarDealership.CoreService.EntityFrameworkCore\CarDealership.CoreService.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\CarDealership.CoreService.Application.Tests\CarDealership.CoreService.Application.Tests.csproj" />
-    <!-- Ngày 33: test gọi SessionController trực tiếp (kiểm 401/200 mà không cần dựng cả host). -->
+    <!-- Test gọi SessionController trực tiếp (kiểm 401/200 mà không cần dựng cả host). -->
     <ProjectReference Include="..\..\src\CarDealership.CoreService.HttpApi\CarDealership.CoreService.HttpApi.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.16.0" />

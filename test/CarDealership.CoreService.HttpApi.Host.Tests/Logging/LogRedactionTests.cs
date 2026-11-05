@@ -10,7 +10,7 @@ using Xunit;
 namespace CarDealership.CoreService.Logging.Tests;
 
 /// <summary>
-/// Ngày 11 (Req 22, 21): log JSON đủ trường chuẩn và che dữ liệu nhạy cảm.
+/// Log JSON đủ trường chuẩn và che dữ liệu nhạy cảm.
 /// </summary>
 public class LogRedactionTests
 {
@@ -47,7 +47,7 @@ public class LogRedactionTests
             .WriteTo.Sink(sink)
             .CreateLogger();
 
-        // Mô phỏng: Correlation_Id đẩy qua LogContext (như middleware Ngày 13),
+        // Mô phỏng: Correlation_Id đẩy qua LogContext (như CorrelationIdMiddleware),
         // path đã được redact trước khi log (không chứa mật khẩu gốc).
         using (LogContext.PushProperty("Correlation_Id", "corr-123"))
         {

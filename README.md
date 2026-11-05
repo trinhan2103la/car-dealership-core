@@ -19,7 +19,7 @@ Docker Compose dùng build context tương đối tới `../car-dealership-bff` 
 
 Yêu cầu: Docker Desktop đang chạy, .NET 10 SDK, psql.
 
-### Chỉ PostgreSQL (Ngày 3)
+### Chỉ PostgreSQL
 
 ```powershell
 # 1) Chuẩn bị biến môi trường
@@ -33,7 +33,7 @@ docker compose -f deploy/docker-compose.yml ps
 psql -h localhost -p 5432 -U cdp -d cdp -c "select version();"
 ```
 
-### Toàn bộ Core_API qua Docker (Ngày 15)
+### Toàn bộ Core_API qua Docker
 
 Thứ tự tự động: `postgres` (healthy) → `migrator` (chạy migration + seed, thoát 0) → `core-api`.
 
@@ -59,7 +59,7 @@ Dừng: `docker compose -f deploy/docker-compose.yml down` (thêm `-v` để xó
 
 ### SuperAdmin ban đầu
 
-Migrator seed 4 Role cố định (SuperAdmin, ContentEditor, SalesStaff, Viewer), grant theo ma trận Req 15.4 và
+Migrator seed 4 Role cố định (SuperAdmin, ContentEditor, SalesStaff, Viewer), grant theo ma trận quyền và
 một SuperAdmin đầu tiên. Tài khoản này lấy từ biến môi trường, **không có mặc định trong mã nguồn**:
 
 | Biến                       | Ý nghĩa                                          |
@@ -86,31 +86,34 @@ $env:SEED_SUPERADMIN_EMAIL = 'superadmin@example.com'
 $env:SEED_SUPERADMIN_PASSWORD = '<12-128 ky tu, du hoa/thuong/so/ky tu dac biet>'
 $env:EDGE_KEY = '<chuoi ngau nhien >= 32 ky tu, vi du: openssl rand -hex 32>'   # chi host can, migrator khong can
 $env:SERVICE_JWT_PUBLIC_KEY = '<khoa CONG KHAI ES256 P-256: PEM mot dong voi \n, hoac base64 SubjectPublicKeyInfo>'
+$env:STRING_ENCRYPTION_PASSPHRASE = '<>= 16 ky tu ngau nhien, vi du: openssl rand -hex 16>'   # chi host can
 dotnet run --project src/CarDealership.CoreService.DbMigrator
 dotnet run --project src/CarDealership.CoreService.HttpApi.Host --no-launch-profile   # ASPNETCORE_URLS=http://127.0.0.1:5099
 ```
 
-### Gọi thử API đăng nhập (Ngày 33–34)
+### Endpoint xác thực
 
-Chỉ BFF gọi Core_API trong hệ thống thật. Từ Ngày 36 mọi request (trừ `GET /health/live`) phải kèm header `X-Edge-Key: <giá trị EDGE_KEY>`, thiếu hoặc sai thì nhận **404 rỗng** (giống route không tồn tại). **Từ Ngày 37 mọi request (trừ `GET /health/live`) còn phải kèm `Authorization: Bearer <service JWT>`** do BFF ký bằng khóa riêng ES256; thiếu/sai/hết hạn thì 401, đúng JWT nhưng sai `scope` thì 403 (`scope=bff` cho endpoint thường, `scope=jobs` chỉ cho `/api/jobs/*`). Nên không curl thẳng được nữa nếu không tự ký token; `/health/ready` cũng cần JWT (UptimeRobot chỉ gọi `/health/ready` của BFF).
+Chỉ BFF gọi Core_API trong hệ thống thật. Mọi request (trừ `GET /health/live`) phải kèm:
 
-Quy tắc JWT (ADR-004): thuật toán **chỉ ES256**; `iss=bff`, `aud=core-api`; `exp − iat` ≤ 60 giây; bắt buộc `iat`, `exp`, `jti`; đúng một giá trị `scope`; lệch đồng hồ cho phép 5 giây. `SERVICE_JWT_PUBLIC_KEY` là biến **bắt buộc** của host (PEM hoặc base64 SPKI, đường cong P-256): thiếu, sai định dạng, sai đường cong hoặc là khóa **riêng** thì process thoát mã 1 và chỉ log tên biến. Khóa riêng chỉ nằm ở BFF (`SERVICE_JWT_PRIVATE_KEY` trong `car-dealership-bff/.env`, đã gitignore).
+- `X-Edge-Key: <giá trị EDGE_KEY>` — thiếu hoặc sai thì nhận **404 rỗng** (giống route không tồn tại).
+- `Authorization: Bearer <service JWT>` do BFF ký bằng khóa riêng ES256 — thiếu/sai/hết hạn thì 401, đúng JWT nhưng sai `scope` thì 403 (`scope=bff` cho endpoint thường, `scope=jobs` chỉ cho `/api/jobs/*`).
 
-Endpoint mới dưới `/api/jobs/*` tự động dùng policy `ServiceJobs` (convention), endpoint nào quên khai báo bảo mật rơi vào policy mặc định `ServiceBff` thay vì mở công khai; muốn mở công khai phải ghi `[AllowAnonymous]` có chủ đích.
+Vì vậy không curl thẳng được nếu không tự ký token; `/health/ready` cũng cần JWT.
 
-`EDGE_KEY` là biến môi trường **bắt buộc** của host: thiếu hoặc ngắn hơn 32 ký tự thì process thoát mã 1 ngay khi khởi động và log tên biến (không in giá trị). Trong `deploy/.env` đặt `EDGE_KEY=...` cho `core-api` của compose. Chạy host từ Rider/IDE thì thêm `EDGE_KEY` vào biến môi trường của cấu hình chạy.
+Quy tắc service JWT: thuật toán **chỉ ES256**; `iss=bff`, `aud=core-api`; `exp − iat` ≤ 60 giây; bắt buộc `iat`, `exp`, `jti`; đúng một giá trị `scope`; lệch đồng hồ cho phép 5 giây. Khi thay mặt một Admin_User, token kèm `sub` (userId) và `sid` (mã phiên). `SERVICE_JWT_PUBLIC_KEY` là biến **bắt buộc** của host (PEM hoặc base64 SPKI, đường cong P-256): thiếu, sai định dạng, sai đường cong hoặc là khóa **riêng** thì process thoát mã 1 và chỉ log tên biến. Khóa riêng chỉ nằm ở BFF (`SERVICE_JWT_PRIVATE_KEY` trong `car-dealership-bff/.env`, đã gitignore).
 
-```powershell
-curl.exe -s -H "X-Edge-Key: $env:EDGE_KEY" -H "Authorization: Bearer $env:SERVICE_JWT" http://127.0.0.1:5099/health/ready   # SERVICE_JWT: token ES256 do BFF ký (Ngày 38)
-```
+Endpoint dưới `/api/jobs/*` tự động dùng policy `ServiceJobs` (convention); endpoint nào quên khai báo bảo mật rơi vào policy mặc định `ServiceBff` thay vì mở công khai; muốn mở công khai phải ghi `[AllowAnonymous]` có chủ đích.
 
-| Method | Route                            | Ý nghĩa                                                                                                                |
-| ------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| POST   | `/api/app/auth/sessions`         | Đăng nhập `{email, password}` → 200 `{sessionId, userId, email, roles, permissions}`; mọi thất bại → 401 cùng một body |
-| GET    | `/api/app/auth/sessions/current` | Header `X-Admin-Session: <sessionId>` → danh tính + quyền, trượt cửa sổ idle 30 phút                                   |
-| DELETE | `/api/app/auth/sessions/current` | Cùng header → đăng xuất, 204                                                                                           |
+`EDGE_KEY` và `STRING_ENCRYPTION_PASSPHRASE` là biến môi trường **bắt buộc** của host: thiếu (hoặc Edge key ngắn hơn 32 ký tự, passphrase ngắn hơn 16) thì process thoát mã 1 ngay khi khởi động và log tên biến (không in giá trị).
 
-Sai 5 lần liên tiếp trong 15 phút thì email đó bị khóa 15 phút (kể cả khi đúng mật khẩu). Session hết hạn sau 30 phút không hoạt động hoặc khi user bị Inactive.
+| Method | Route                            | Ý nghĩa                                                                                                |
+| ------ | -------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| POST   | `/api/app/auth/sessions`         | Đăng nhập `{email, password}` → 200 `{refreshToken, sessionId, ...}`; mọi thất bại → 401 cùng một body |
+| POST   | `/api/app/auth/sessions/refresh` | Đổi refresh token lấy token mới (xoay vòng); dùng lại token cũ → thu hồi cả phiên                      |
+| POST   | `/api/app/auth/sessions/revoke`  | Đăng xuất: thu hồi phiên của refresh token, 204                                                        |
+| GET    | `/api/app/auth/sessions/current` | Danh tính + quyền của phiên trong claim `sub`/`sid` của service JWT                                     |
+
+Sai 5 lần liên tiếp trong 15 phút thì email đó bị khóa 15 phút (kể cả khi đúng mật khẩu). Phiên hết hạn sau 3 ngày không dùng, tối đa 7 ngày kể từ lúc đăng nhập, hoặc khi user bị Inactive.
 
 ### Chạy test
 
@@ -138,4 +141,4 @@ Khi thêm package `Volo.*` hợp lệ: xác nhận nó thuộc repo `abpframewor
 
 ## Tài liệu
 
-Thiết kế, ERD, ADR, roadmap, kế hoạch theo ngày: xem spec `car-dealership-platform` trong Kiro (`.kiro/specs` và `.kiro/docs`). Source code là nguồn sự thật cuối cùng; khi code lệch tài liệu thì cập nhật tài liệu.
+Thiết kế, ERD và ADR được quản lý riêng; source code là nguồn sự thật cuối cùng.

@@ -16,7 +16,7 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 24 (Req 14.3, 28.9): mật khẩu phải dài 12–128 ký tự, kể cả khi mặc định của ABP khác.
+/// Mật khẩu phải dài 12–128 ký tự, kể cả khi mặc định của ABP khác.
 /// Chạy qua IdentityUserManager thật + SQLite in-memory, tức là đúng đường mà đăng nhập/seed sẽ dùng.
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
@@ -63,7 +63,7 @@ public class PasswordPolicyTests : CoreServiceEntityFrameworkCoreTestBase
     [Fact]
     public async Task Abp_composition_rules_are_kept()
     {
-        // Quyết định Ngày 24: GIỮ luật hoa/thường/số/ký tự đặc biệt của ABP. 16 ký tự toàn chữ thường bị từ chối.
+        // GIỮ luật hoa/thường/số/ký tự đặc biệt của ABP: 16 ký tự toàn chữ thường bị từ chối.
         var result = await TryCreateUserAsync("passwordpassword");
 
         result.Succeeded.ShouldBeFalse();

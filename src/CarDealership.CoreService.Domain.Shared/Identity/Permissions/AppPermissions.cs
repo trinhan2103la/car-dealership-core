@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace CarDealership.CoreService.Identity.Permissions;
 
 /// <summary>
-/// Req 15.14: đúng 9 Permission của dự án. Tên là khóa tự nhiên (Req 25.1), KHÔNG đổi sau khi đã seed.
+/// Đúng 9 Permission của dự án. Tên là khóa tự nhiên, KHÔNG đổi sau khi đã seed.
 /// Đặt ở Domain.Shared để cả seeder (Domain) lẫn PermissionDefinitionProvider (Application.Contracts) dùng chung.
 /// </summary>
 public static class AppPermissions

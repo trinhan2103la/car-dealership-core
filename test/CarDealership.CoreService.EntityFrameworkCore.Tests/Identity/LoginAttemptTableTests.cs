@@ -13,7 +13,7 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 31 (Req 14.1, 14.4, 14.5): bảng idn_login_attempts trên PostgreSQL thật, policy chạy trên dữ liệu đọc từ DB,
+/// Bảng idn_login_attempts trên PostgreSQL thật, policy chạy trên dữ liệu đọc từ DB,
 /// và lockout có sẵn của ASP.NET Identity đã tắt (một nguồn sự thật).
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]

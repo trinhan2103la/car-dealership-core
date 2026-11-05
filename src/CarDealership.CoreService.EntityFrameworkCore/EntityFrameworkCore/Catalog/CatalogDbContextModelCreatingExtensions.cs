@@ -4,7 +4,7 @@ using Volo.Abp;
 namespace CarDealership.CoreService.EntityFrameworkCore.Catalog;
 
 /// <summary>
-/// Ngày 16 (ADR-003): cấu hình EF Core cho module Catalog. Hiện rỗng (chưa có entity);
+/// Cấu hình EF Core cho module Catalog. Hiện rỗng (chưa có entity);
 /// entity + mapping thêm ở P2. Bảng Catalog dùng tiền tố "cat_".
 /// </summary>
 public static class CatalogDbContextModelCreatingExtensions

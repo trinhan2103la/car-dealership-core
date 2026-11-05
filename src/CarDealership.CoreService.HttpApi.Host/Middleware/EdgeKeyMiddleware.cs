@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace CarDealership.CoreService.Middleware;
 
 /// <summary>
-/// Giá trị cấu hình của Edge key (design "Bảo mật": lớp phòng thủ thứ hai, chặn quét host trước cả khi parse JWT).
+/// Giá trị cấu hình của Edge key: lớp phòng thủ thứ hai, chặn quét host trước cả khi parse JWT.
 /// Khóa lấy từ biến môi trường <see cref="VariableName"/>, ngẫu nhiên 32 byte, không bao giờ nằm trong mã nguồn.
 /// </summary>
 public class EdgeKeyOptions
@@ -21,7 +21,7 @@ public class EdgeKeyOptions
 }
 
 /// <summary>
-/// Ngày 36 (Req 28.12, 21): middleware ĐẦU TIÊN sau Correlation_Id.
+/// Middleware ĐẦU TIÊN sau Correlation_Id.
 /// - Thiếu hoặc sai <c>X-Edge-Key</c> → 404, body rỗng, không header lạ (giống route không tồn tại, không lộ gì).
 /// - Ngoại lệ DUY NHẤT: đúng <c>GET /health/live</c> (so khớp nguyên path, không prefix) để health check của host
 ///   (Koyeb) chạy không cần header. <c>/health/ready</c> vẫn cần key.

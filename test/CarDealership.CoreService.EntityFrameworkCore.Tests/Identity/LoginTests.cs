@@ -18,7 +18,7 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 33 (Req 14.1, 14.4, 14.5, 14.6, 14.9, 17): đăng nhập trên PostgreSQL thật, qua ISessionAppService trong một
+/// Đăng nhập trên PostgreSQL thật, qua ISessionAppService trong một
 /// unit of work bao ngoài (giống request thật) để chứng minh lần sai VẪN được ghi dù kết quả là thất bại.
 /// Đồng hồ là <see cref="TestClock"/>: dịch 14:59 / 15:00 mà không phải chờ.
 /// </summary>
@@ -84,7 +84,8 @@ public class LoginTests : CoreServiceEntityFrameworkCoreTestBase, IDisposable
         var result = await LoginAsync(CoreServiceTestConsts.SuperAdminEmail, CoreServiceTestConsts.SuperAdminPassword);
 
         result.ShouldNotBeNull();
-        result.SessionId.Length.ShouldBe(43);
+        result.RefreshToken!.Length.ShouldBe(43);
+        result.SessionId.ShouldNotBe(Guid.Empty);
         result.Email.ShouldBe(CoreServiceTestConsts.SuperAdminEmail);
         result.Roles.ShouldBe(new[] { "SuperAdmin" });
         result.Permissions.Count.ShouldBe(9);
@@ -118,7 +119,7 @@ public class LoginTests : CoreServiceEntityFrameworkCoreTestBase, IDisposable
     public async Task Session_row_stores_only_the_hash_of_the_returned_session_id()
     {
         var result = await LoginAsync(CoreServiceTestConsts.SuperAdminEmail, CoreServiceTestConsts.SuperAdminPassword);
-        var hash = SessionToken.Hash(result!.SessionId);
+        var hash = SessionToken.Hash(result!.RefreshToken!);
 
         var sessions = await WithDbAsync(db => db.AdminSessions.AsNoTracking().ToListAsync());
 
@@ -129,7 +130,7 @@ public class LoginTests : CoreServiceEntityFrameworkCoreTestBase, IDisposable
 
         var dump = await WithDbAsync(db => db.Database
             .SqlQuery<string>($"select t::text as \"Value\" from idn_admin_sessions t").ToListAsync());
-        dump.ShouldAllBe(row => !row.Contains(result.SessionId));
+        dump.ShouldAllBe(row => !row.Contains(result.RefreshToken!));
     }
 
     [Fact]
@@ -138,7 +139,8 @@ public class LoginTests : CoreServiceEntityFrameworkCoreTestBase, IDisposable
         var first = await LoginAsync(CoreServiceTestConsts.SuperAdminEmail, CoreServiceTestConsts.SuperAdminPassword);
         var second = await LoginAsync(CoreServiceTestConsts.SuperAdminEmail, CoreServiceTestConsts.SuperAdminPassword);
 
-        first!.SessionId.ShouldNotBe(second!.SessionId);
+        first!.RefreshToken.ShouldNotBe(second!.RefreshToken);
+        first.SessionId.ShouldNotBe(second.SessionId);
     }
 
     [Fact]
@@ -387,7 +389,7 @@ public class LoginTests : CoreServiceEntityFrameworkCoreTestBase, IDisposable
         dumps.Count.ShouldBeGreaterThan(0);
         dumps.ShouldAllBe(row => !row.Contains(typedPassword));
         dumps.ShouldAllBe(row => !row.Contains(CoreServiceTestConsts.SuperAdminPassword));
-        dumps.ShouldAllBe(row => !row.Contains(ok!.SessionId));
+        dumps.ShouldAllBe(row => !row.Contains(ok!.RefreshToken!));
     }
 
     [Fact]

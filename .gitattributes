@@ -1,4 +1,6 @@
 **/wwwroot/libs/** linguist-vendored
 
-# Ngày 20: script shell luôn LF (checkout CRLF trên Windows làm bash lỗi "\r").
+# Script shell luôn LF (checkout CRLF trên Windows làm bash lỗi "\r").
 *.sh text eol=lf
+# openapi.json luôn LF để git diff trong CI không lệch theo OS.
+openapi/*.json text eol=lf

@@ -5,7 +5,7 @@ using System.Linq;
 namespace CarDealership.CoreService.Logging;
 
 /// <summary>
-/// Ngày 11 (Req 22, 21): che dữ liệu nhạy cảm trước khi đưa vào log.
+/// Che dữ liệu nhạy cảm trước khi đưa vào log.
 /// Dùng cho path/query và tên header, tránh ghi mật khẩu, cookie, Edge key, JWT ra log.
 /// Thuần (pure) để unit test dễ.
 /// </summary>

@@ -21,7 +21,7 @@ public class PasswordPolicySettingDefinitionProvider : SettingDefinitionProvider
             requiredLength.DefaultValue = PasswordPolicy.MinLength.ToString(CultureInfo.InvariantCulture);
         }
 
-        // Ngày 31: khóa đăng nhập do LoginAttemptPolicy quyết định (một nguồn sự thật). Tắt lockout có sẵn của
+        // Khóa đăng nhập do LoginAttemptPolicy quyết định (một nguồn sự thật). Tắt lockout có sẵn của
         // ASP.NET Identity (5 lần/5 phút) để hai cơ chế không chạy song song với số liệu khác nhau.
         var lockoutAllowed = context.GetOrNull(IdentitySettingNames.Lockout.AllowedForNewUsers);
 

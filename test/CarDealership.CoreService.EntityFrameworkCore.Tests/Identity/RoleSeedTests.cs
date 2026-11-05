@@ -16,7 +16,7 @@ using Xunit;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 26 (Req 15.4, 15.14, 25.1): đúng 4 Role cố định, grant đúng ma trận, seed lại không đổi gì.
+/// Đúng 4 Role cố định, grant đúng ma trận, seed lại không đổi gì.
 /// Ma trận mong đợi viết TAY ở đây, độc lập với RolePermissionMatrix của code, để test không tự khẳng định mình.
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
@@ -112,7 +112,7 @@ public class RoleSeedTests : CoreServiceEntityFrameworkCoreTestBase
     [Fact]
     public async Task Invalid_superadmin_configuration_stops_the_whole_seed_before_writing_anything()
     {
-        // Req 25.7: cấu hình SuperAdmin sai thì dừng NGAY, không tạo gì. Dựng tình huống: thiếu role Viewer.
+        // Cấu hình SuperAdmin sai thì dừng NGAY, không tạo gì. Dựng tình huống: thiếu role Viewer.
         await WithUnitOfWorkAsync(async () =>
         {
             var db = await GetRequiredService<IDbContextProvider<CoreServiceDbContext>>().GetDbContextAsync();

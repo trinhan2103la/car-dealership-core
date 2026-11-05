@@ -12,7 +12,7 @@ using Xunit;
 namespace CarDealership.CoreService.Auth.Tests;
 
 /// <summary>
-/// Ngày 37 (ADR-004, Req 28.12): service JWT trên HOST THẬT. Các ca bị Edge key chặn hoặc /health/live không cần DB; các ca
+/// Service JWT trên HOST THẬT. Các ca bị Edge key chặn hoặc /health/live không cần DB; các ca
 /// tới tầng xác thực/ủy quyền cần DB (AbpRequestLocalizationMiddleware đọc Setting trước), nên dùng DbProbe như các test cùng loại.
 /// </summary>
 public class ServiceCredentialHostTests : IClassFixture<CoreServiceWebApplicationFactory>
@@ -119,7 +119,7 @@ public class ServiceCredentialHostTests : IClassFixture<CoreServiceWebApplicatio
     }
 }
 
-/// <summary>Ngày 37 (Req 16.12): khóa công khai thiếu/sai thì host KHÔNG khởi động.</summary>
+/// <summary>Khóa công khai thiếu/sai thì host KHÔNG khởi động.</summary>
 public class ServiceCredentialStartupTests
 {
     private sealed class FactoryWithPublicKey(string? publicKey) : WebApplicationFactory<Program>

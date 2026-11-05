@@ -4,7 +4,7 @@ using Volo.Abp;
 namespace CarDealership.CoreService.EntityFrameworkCore.Audit;
 
 /// <summary>
-/// Ngày 16 (ADR-003): cấu hình EF Core cho module Audit CỦA DỰ ÁN (security event).
+/// Cấu hình EF Core cho module Audit CỦA DỰ ÁN (security event).
 /// Hiện rỗng; bảng tiền tố "aud_". Tên method có tiền tố "Project" để không nhầm với
 /// ConfigureAuditLogging() của ABP.
 /// </summary>

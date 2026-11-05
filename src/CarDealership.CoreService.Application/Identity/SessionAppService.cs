@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -17,7 +17,8 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.Identity;
 
 /// <summary>
-/// Ngày 33 (Req 14.1, 14.4, 14.5, 14.6, 14.9, 17): đăng nhập, áp <see cref="LoginAttemptPolicy"/>, tạo session, ghi security event.
+/// Đăng nhập, áp <see cref="LoginAttemptPolicy"/>, tạo phiên, ghi security event.
+/// Phiên = family refresh token; thêm refresh (xoay vòng + grace 20 s + phát hiện dùng lại) và revoke.
 ///
 /// Quyết định thiết kế:
 /// - KHÔNG ném exception khi thất bại: ném sẽ rollback unit of work bao ngoài và lần sai không được ghi, nên
@@ -25,7 +26,7 @@ namespace CarDealership.CoreService.Identity;
 /// - Mọi lý do thất bại (email lạ, sai mật khẩu, đang khóa, Inactive) cho cùng một kết quả ra ngoài; lý do chỉ có trong log nội bộ.
 /// - Cả nhánh "không kiểm mật khẩu thật" vẫn băm một mật khẩu giả để thời gian phản hồi không lộ email có tồn tại.
 /// - Tuần tự hóa theo email (cổng khóa trong tiến trình): nếu không, N request song song cùng đọc "chưa khóa" và vượt
-///   quá 5 lần thử. Giả định MVP chạy MỘT instance Core_API (ADR-007, không Redis); nhiều instance cần khóa ở DB.
+///   quá 5 lần thử. Giả định chạy MỘT instance Core_API (không Redis); nhiều instance cần khóa ở DB.
 /// - [DisableAuditing]: ABP auditing ghi tham số action, sẽ đưa mật khẩu và session id vào AbpAuditLogActions.
 /// </summary>
 [DisableAuditing]
@@ -35,6 +36,9 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
 
     private const int GateCount = 64;
     private static readonly SemaphoreSlim[] Gates =
+        Enumerable.Range(0, GateCount).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
+
+    private static readonly SemaphoreSlim[] RefreshGates =
         Enumerable.Range(0, GateCount).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
 
     private static readonly Lazy<string> DummyHash = new(() =>
@@ -87,9 +91,61 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
         }
     }
 
-    public virtual async Task<CurrentSessionDto?> GetCurrentAsync(string? sessionId)
+    public virtual async Task<LoginResultDto?> RefreshAsync(string? refreshToken)
     {
-        var resolved = await _resolver.ResolveAsync(sessionId);
+        if (!SessionToken.IsWellFormed(refreshToken))
+        {
+            return null;
+        }
+
+        var hash = SessionToken.Hash(refreshToken!);
+
+        // Hai request trình CÙNG một refresh token (2 tab, hoặc 2 request trong 1 tab) phải chạy tuần tự: request sau thấy
+        // token đã thành "previous" và rơi vào grace, thay vì cả hai cùng xoay và một token mới bị mất (đăng xuất oan).
+        // Giả định MỘT instance Core_API như cổng đăng nhập.
+        var gate = RefreshGates[BitConverter.ToUInt32(hash, 0) % GateCount];
+        await gate.WaitAsync();
+        try
+        {
+            return await RefreshCoreAsync(hash);
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    public virtual async Task<bool> RevokeAsync(string? refreshToken)
+    {
+        if (!SessionToken.IsWellFormed(refreshToken))
+        {
+            return false;
+        }
+
+        var hash = SessionToken.Hash(refreshToken!);
+        var now = Clock.Now;
+
+        using var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
+
+        var session = await _resolver.FindByRefreshTokenAsync(hash);
+        if (session is null || session.Match(hash, now) == RefreshTokenMatch.None || !session.IsActiveAt(now))
+        {
+            return false;   // không hoàn tất UoW: không ghi gì
+        }
+
+        var user = await _userManager.FindByIdAsync(session.UserId.ToString());
+
+        session.Revoke(now, SessionRevokeReasons.Logout);
+        await _sessions.UpdateAsync(session, autoSave: true);
+        await _events.WriteAsync(SecurityEventActions.Logout, user?.Email, session.UserId, reason: null);
+        await uow.CompleteAsync();
+
+        return true;
+    }
+
+    public virtual async Task<CurrentSessionDto?> GetCurrentAsync(Guid? sessionId, Guid? userId)
+    {
+        var resolved = await _resolver.ResolveAsync(sessionId, userId);
         if (resolved is null)
         {
             return null;
@@ -105,6 +161,7 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
 
         return new CurrentSessionDto
         {
+            SessionId = resolved.SessionId,
             UserId = user.Id,
             Email = user.Email,
             Roles = roles,
@@ -112,32 +169,83 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
         };
     }
 
-    public virtual async Task<bool> LogoutAsync(string? sessionId)
+    private async Task<LoginResultDto?> RefreshCoreAsync(byte[] hash)
     {
-        if (!SessionToken.IsWellFormed(sessionId))
-        {
-            return false;
-        }
-
         var now = Clock.Now;
 
         using var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
 
-        var session = await _resolver.FindAsync(sessionId!);
-        if (session is null || !session.IsActiveAt(now))
+        var session = await _resolver.FindByRefreshTokenAsync(hash);
+        if (session is null)
         {
-            return false;   // không hoàn tất UoW: không ghi gì
+            return null;
+        }
+
+        var match = session.Match(hash, now);
+        if (match == RefreshTokenMatch.None)
+        {
+            return null;
+        }
+
+        if (match == RefreshTokenMatch.Reused)
+        {
+            // Token đã bị thay được trình lại ngoài grace: kẻ gian hoặc chủ thật đang giữ bản cũ. Không phân biệt được ai,
+            // nên thu hồi CẢ family: cả hai phía phải đăng nhập lại (RFC 9700 §4.14.2).
+            if (!session.IsRevoked)
+            {
+                var owner = await _userManager.FindByIdAsync(session.UserId.ToString());
+                session.Revoke(now, SessionRevokeReasons.RefreshTokenReuse);
+                await _sessions.UpdateAsync(session, autoSave: true);
+                await _events.WriteAsync(SecurityEventActions.RefreshTokenReuse, owner?.Email, session.UserId, reason: null);
+                await uow.CompleteAsync();
+            }
+
+            return null;
+        }
+
+        if (!session.IsActiveAt(now))
+        {
+            return null;   // hết hạn idle/tuyệt đối hoặc đã thu hồi: không ghi gì
         }
 
         var user = await _userManager.FindByIdAsync(session.UserId.ToString());
+        if (user is null || !user.IsActive)
+        {
+            await _resolver.RevokeInactiveAsync(session.UserId, user?.Email, now);
+            await uow.CompleteAsync();
+            return null;
+        }
 
-        session.Revoke(now);
-        await _sessions.UpdateAsync(session, autoSave: true);
-        await _events.WriteAsync(SecurityEventActions.Logout, user?.Email, session.UserId, reason: null);
+        string? newToken = null;
+        if (match == RefreshTokenMatch.Current)
+        {
+            newToken = SessionToken.Generate();
+            session.Rotate(SessionToken.Hash(newToken), now);
+            await _sessions.UpdateAsync(session, autoSave: true);
+        }
+
+        // PreviousWithinGrace: không ghi gì, không phát token mới. Trình duyệt đã nhận token mới từ request vừa xoay.
         await uow.CompleteAsync();
 
-        return true;
+        return await BuildResultAsync(user, session, newToken);
     }
+
+    private async Task<LoginResultDto> BuildResultAsync(AbpIdentityUser user, AdminSession session, string? refreshToken)
+    {
+        var roles = (await _userManager.GetRolesAsync(user)).OrderBy(r => r, StringComparer.Ordinal).ToList();
+
+        return new LoginResultDto
+        {
+            RefreshToken = refreshToken,
+            SessionId = session.Id,
+            SessionExpiresAt = session.AbsoluteExpiresAt,
+            UserId = user.Id,
+            Email = user.Email,
+            Roles = roles,
+            Permissions = await GetPermissionsAsync(roles)
+        };
+    }
+
     private async Task<LoginResultDto?> LoginCoreAsync(string email, string normalized, string password)
     {
         var now = Clock.Now;
@@ -193,27 +301,18 @@ public class SessionAppService : CoreServiceAppService, ISessionAppService
     private async Task<LoginResultDto?> CompleteSuccessAsync(AbpIdentityUser user, string normalized, DateTime now)
     {
         var token = SessionToken.Generate();
-        var roles = (await _userManager.GetRolesAsync(user)).OrderBy(r => r, StringComparer.Ordinal).ToList();
-        var permissions = await GetPermissionsAsync(roles);
+        var session = new AdminSession(GuidGenerator.Create(), SessionToken.Hash(token), user.Id, now);
 
         using (var uow = UnitOfWorkManager.Begin(requiresNew: true, isTransactional: true))
         {
             await _attempts.InsertAsync(
                 new LoginAttempt(GuidGenerator.Create(), normalized, user.Id, true, now), autoSave: true);
-            await _sessions.InsertAsync(
-                new AdminSession(GuidGenerator.Create(), SessionToken.Hash(token), user.Id, now), autoSave: true);
+            await _sessions.InsertAsync(session, autoSave: true);
             await _events.WriteAsync(SecurityEventActions.LoginSucceeded, user.Email, user.Id, reason: null);
             await uow.CompleteAsync();
         }
 
-        return new LoginResultDto
-        {
-            SessionId = token,
-            UserId = user.Id,
-            Email = user.Email,
-            Roles = roles,
-            Permissions = permissions
-        };
+        return await BuildResultAsync(user, session, token);
     }
 
     private async Task<LoginResultDto?> CompleteFailureAsync(

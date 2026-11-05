@@ -11,7 +11,7 @@ using Xunit;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 30 (ADR-005, Req 14.7, 21): bảng idn_admin_sessions trên PostgreSQL thật đúng cột, đúng index,
+/// Bảng idn_admin_sessions trên PostgreSQL thật đúng cột, đúng index,
 /// và KHÔNG chứa session id gốc ở bất kỳ ô nào.
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
@@ -42,7 +42,46 @@ public class AdminSessionTableTests : CoreServiceEntityFrameworkCoreTestBase
             "created_at:timestamp with time zone:NO",
             "last_seen_at:timestamp with time zone:NO",
             "revoked_at:timestamp with time zone:YES",
+            // Refresh token rotation.
+            "previous_token_hash:bytea:YES",
+            "rotated_at:timestamp with time zone:YES",
+            "revoke_reason:character varying:YES",
         }, ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task Database_rejects_a_previous_token_hash_that_is_not_32_bytes()
+    {
+        var ex = await Should.ThrowAsync<Exception>(() => WithDbAsync(db => db.Database.ExecuteSqlRawAsync(
+            "insert into idn_admin_sessions (id, token_hash, previous_token_hash, user_id, created_at, last_seen_at) " +
+            "values (gen_random_uuid(), decode(repeat('ab', 32), 'hex'), '\\x0102'::bytea, gen_random_uuid(), now(), now())")));
+
+        ex.ToString().ShouldContain("ck_idn_admin_sessions_previous_token_hash_len");
+    }
+
+    [Fact]
+    public async Task Rotation_round_trips_previous_hash_rotated_at_and_revoke_reason()
+    {
+        var first = SessionToken.Hash(SessionToken.Generate());
+        var second = SessionToken.Hash(SessionToken.Generate());
+        var id = Guid.NewGuid();
+
+        await WithDbAsync(async db =>
+        {
+            var session = new AdminSession(id, first, Guid.NewGuid(), Now);
+            session.Rotate(second, Now.AddMinutes(10));
+            session.Revoke(Now.AddMinutes(11), "Logout");
+            db.AdminSessions.Add(session);
+            await db.SaveChangesAsync();
+            return 0;
+        });
+
+        var loaded = await WithDbAsync(db => db.AdminSessions.AsNoTracking().SingleAsync(s => s.Id == id));
+        loaded.TokenHash.ShouldBe(second);
+        loaded.PreviousTokenHash.ShouldBe(first);
+        loaded.RotatedAt.ShouldBe(Now.AddMinutes(10));
+        loaded.RotatedAt!.Value.Kind.ShouldBe(DateTimeKind.Utc);
+        loaded.RevokeReason.ShouldBe("Logout");
     }
 
     [Fact]
@@ -54,6 +93,8 @@ public class AdminSessionTableTests : CoreServiceEntityFrameworkCoreTestBase
 
         indexes.ShouldContain(i => i.Contains("CREATE UNIQUE INDEX ux_idn_admin_sessions_token_hash") && i.Contains("(token_hash)"));
         indexes.ShouldContain(i => i.Contains("ix_idn_admin_sessions_user_active") && i.Contains("(user_id)") && i.Contains("WHERE (revoked_at IS NULL)"));
+        indexes.ShouldContain(i => i.Contains("ix_idn_admin_sessions_previous_token_hash") && i.Contains("(previous_token_hash)")
+                                   && i.Contains("WHERE (previous_token_hash IS NOT NULL)"));
     }
 
     [Fact]

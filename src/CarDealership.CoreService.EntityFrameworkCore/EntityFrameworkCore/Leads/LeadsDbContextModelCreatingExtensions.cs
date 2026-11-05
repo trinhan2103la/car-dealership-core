@@ -4,7 +4,7 @@ using Volo.Abp;
 namespace CarDealership.CoreService.EntityFrameworkCore.Leads;
 
 /// <summary>
-/// Ngày 16 (ADR-003): cấu hình EF Core cho module Leads. Hiện rỗng; bảng tiền tố "led_".
+/// Cấu hình EF Core cho module Leads. Hiện rỗng; bảng tiền tố "led_".
 /// </summary>
 public static class LeadsDbContextModelCreatingExtensions
 {

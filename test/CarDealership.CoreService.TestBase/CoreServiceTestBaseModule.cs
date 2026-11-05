@@ -27,7 +27,7 @@ public class CoreServiceTestBaseModule : AbpModule
 
         context.Services.AddAlwaysAllowAuthorization();
 
-        // Ngày 33: đồng hồ dịch chuyển được cho test mốc 15 phút / 30 phút.
+        // Đồng hồ dịch chuyển được cho test mốc 15 phút / 30 phút.
         context.Services.AddSingleton<TestClock>();
         context.Services.Replace(ServiceDescriptor.Singleton<Volo.Abp.Timing.IClock>(
             sp => sp.GetRequiredService<TestClock>()));

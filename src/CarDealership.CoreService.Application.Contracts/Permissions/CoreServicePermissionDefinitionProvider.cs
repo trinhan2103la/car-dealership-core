@@ -5,7 +5,7 @@ using Volo.Abp.Localization;
 namespace CarDealership.CoreService.Permissions;
 
 /// <summary>
-/// Req 15.14: khai báo đúng 9 Permission bằng permission system của ABP.
+/// Khai báo đúng 9 Permission bằng permission system của ABP.
 /// Tên hiển thị là chuỗi cố định (tiếng Anh) vì chưa có UI quản lý Permission; thêm khóa localization
 /// khi một UI thật sự cần hiển thị.
 /// </summary>

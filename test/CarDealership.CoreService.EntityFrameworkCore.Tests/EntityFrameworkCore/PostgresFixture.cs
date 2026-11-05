@@ -8,7 +8,7 @@ using Xunit;
 namespace CarDealership.CoreService.EntityFrameworkCore;
 
 /// <summary>
-/// Ngày 25: một container PostgreSQL 18 cho CẢ collection test EF Core (không phải mỗi class một container).
+/// Một container PostgreSQL 18 cho CẢ collection test EF Core (không phải mỗi class một container).
 /// xUnit tạo fixture này trước test đầu tiên của collection và hủy sau test cuối.
 /// - InitializeAsync: khởi động container, áp migration thật (không dùng EnsureCreated).
 /// - ResetDatabase: TRUNCATE mọi bảng trừ lịch sử migration; module test gọi trước mỗi test.

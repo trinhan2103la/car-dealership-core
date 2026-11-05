@@ -13,6 +13,9 @@ public static class SecurityEventActions
     public const string AccountLockedOut = "AdminAccountLockedOut";
     public const string Logout = "AdminLogout";
     public const string SessionsRevoked = "AdminSessionsRevoked";
+
+    /// <summary>Refresh token đã bị thay được dùng lại ngoài grace → cả family bị thu hồi (nghi đánh cắp).</summary>
+    public const string RefreshTokenReuse = "AdminRefreshTokenReuse";
 }
 
 public static class LoginFailureReasons
@@ -23,7 +26,7 @@ public static class LoginFailureReasons
     public const string Locked = "Locked";
 }
 
-/// <summary>Ghi sự kiện bảo mật. Tạm ghi vào ABP security log; Ngày 58 chuyển sang IAuditTrail (aud_entries).</summary>
+/// <summary>Ghi sự kiện bảo mật vào ABP security log.</summary>
 public interface ISecurityEventWriter
 {
     Task WriteAsync(string action, string? email, Guid? userId, string? reason);

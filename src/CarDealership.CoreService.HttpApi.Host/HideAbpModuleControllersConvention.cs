@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 namespace CarDealership.CoreService;
 
 /// <summary>
-/// Ngày 10 (Req 29.5): ẩn mọi controller do module ABP tự đăng ký
+/// Ẩn mọi controller do module ABP tự đăng ký
 /// (Identity, PermissionManagement, SettingManagement, lõi Abp...) khỏi routing,
 /// để các endpoint /api/identity/*, /api/permission-management/*, /api/setting-management/*,
 /// /api/abp/* trả 404. Controller của dự án (namespace CarDealership.CoreService.*)

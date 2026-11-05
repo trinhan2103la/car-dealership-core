@@ -9,7 +9,7 @@ using Volo.Abp.Uow;
 namespace CarDealership.CoreService.EntityFrameworkCore;
 
 /// <summary>
-/// Ngày 25: test EF Core chạy trên PostgreSQL 18 thật (Testcontainers) thay cho SQLite in-memory.
+/// Test EF Core chạy trên PostgreSQL 18 thật (Testcontainers) thay cho SQLite in-memory.
 /// Container do <see cref="PostgresFixture"/> quản lý (một container cho cả collection test).
 /// </summary>
 [DependsOn(
