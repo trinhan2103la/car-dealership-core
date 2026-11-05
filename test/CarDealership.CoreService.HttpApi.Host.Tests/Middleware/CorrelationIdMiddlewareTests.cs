@@ -13,7 +13,7 @@ using Xunit;
 namespace CarDealership.CoreService.Middleware.Tests;
 
 /// <summary>
-/// Ngày 13 (Req 22.2–22.5): chuẩn hóa Correlation_Id, chống log injection.
+/// Chuẩn hóa Correlation_Id, chống log injection.
 /// Dùng TestServer (pipeline ASP.NET thật, không DB/ABP) để OnStarting chạy đúng như production.
 /// </summary>
 public class CorrelationIdMiddlewareTests

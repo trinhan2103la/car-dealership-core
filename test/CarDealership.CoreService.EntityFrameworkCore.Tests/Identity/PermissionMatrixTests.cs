@@ -12,7 +12,7 @@ using Xunit;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 27 (Req 15.4, 15.14): kiểm MỌI ô của ma trận 4 Role × 9 Permission qua IPermissionChecker thật
+/// Kiểm MỌI ô của ma trận 4 Role × 9 Permission qua IPermissionChecker thật
 /// trên PostgreSQL thật (grant do DbMigrator/seeder ghi), không gọi RolePermissionMatrix của code.
 /// Ma trận mong đợi viết TAY ở đây, tách khỏi code sản xuất, để test không tự khẳng định mình.
 /// </summary>
@@ -26,7 +26,7 @@ public class PermissionMatrixTests : CoreServiceEntityFrameworkCoreTestBase
         "Users.Manage", "Settings.Manage", "AuditLog.View", "Analytics.View"
     };
 
-    // Req 15.4, viết tay từng Role.
+    // Viết tay từng Role (không suy ra từ code đang kiểm).
     private static readonly Dictionary<string, string[]> Expected = new()
     {
         ["SuperAdmin"] = AllPermissions,
@@ -105,7 +105,7 @@ public class PermissionMatrixTests : CoreServiceEntityFrameworkCoreTestBase
     [Fact]
     public async Task Role_name_that_is_not_seeded_is_denied_every_permission()
     {
-        // Req 15.4: mọi Permission không được liệt kê bị từ chối, kể cả với Role lạ (vd. "admin" của ABP).
+        // Mọi Permission không được liệt kê bị từ chối, kể cả với Role lạ (vd. "admin" của ABP).
         foreach (var permission in AllPermissions)
         {
             (await IsGrantedAsync(new[] { "admin" }, permission)).ShouldBeFalse(permission);

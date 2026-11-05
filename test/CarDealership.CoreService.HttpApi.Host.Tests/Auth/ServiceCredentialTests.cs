@@ -25,7 +25,7 @@ using Xunit;
 namespace CarDealership.CoreService.Auth.Tests;
 
 /// <summary>
-/// Ngày 37 (ADR-004, Req 15.3, 21, 28.12): bảng ca cho xác thực service JWT ES256 + policy theo scope, trên host ASP.NET tối
+/// Bảng ca cho xác thực service JWT ES256 + policy theo scope, trên host ASP.NET tối
 /// giản (đúng AddServiceCredential + UseAuthentication/UseAuthorization thật, không DB/ABP nên chạy ở mọi máy).
 /// </summary>
 public class ServiceCredentialTests

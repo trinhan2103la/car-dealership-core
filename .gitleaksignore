@@ -1,5 +1,5 @@
 # Bỏ qua ĐÚNG MỘT phát hiện LỊCH SỬ, đã xác minh là dương tính giả (false positive).
-# Commit e3b68bd (Ngày 36) có hằng số dummy của TEST: `public const string Key = "test-edge-key-0123..."` trong EdgeKeyTesting.cs.
+# Commit e3b68bd có hằng số dummy của TEST: `public const string Key = "test-edge-key-0123..."` trong EdgeKeyTesting.cs.
 # Đó là khóa giả cố định chỉ để test host, KHÔNG phải bí mật và không dùng ở bất kỳ môi trường nào.
 # Lịch sử đã đẩy lên remote (PR #4) nên không viết lại; từ commit sau, khóa test được sinh ngẫu nhiên lúc chạy test
 # (không còn chuỗi nào trong mã nguồn). Định dạng: <commit>:<file>:<rule>:<dòng> (fingerprint do gitleaks in ra).

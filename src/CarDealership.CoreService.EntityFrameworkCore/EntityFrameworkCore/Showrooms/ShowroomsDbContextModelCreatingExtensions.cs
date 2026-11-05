@@ -4,7 +4,7 @@ using Volo.Abp;
 namespace CarDealership.CoreService.EntityFrameworkCore.Showrooms;
 
 /// <summary>
-/// Ngày 16 (ADR-003): cấu hình EF Core cho module Showrooms. Hiện rỗng; bảng tiền tố "shr_".
+/// Cấu hình EF Core cho module Showrooms. Hiện rỗng; bảng tiền tố "shr_".
 /// </summary>
 public static class ShowroomsDbContextModelCreatingExtensions
 {

@@ -8,7 +8,7 @@ namespace CarDealership.CoreService;
 /// Dựng Host với Environment = Production (giống container compose mặc định) để kiểm các hành vi
 /// KHÔNG được phơi ở môi trường thật, ví dụ Swagger. Dùng connection string trong appsettings
 /// (localhost:5432) nên test dùng nó phải qua DbProbe và bỏ qua khi không có Postgres.
-/// Ngày 36: client mặc định kèm X-Edge-Key hợp lệ (xem <see cref="EdgeKeyTesting"/>).
+/// Client mặc định kèm X-Edge-Key hợp lệ (xem <see cref="EdgeKeyTesting"/>).
 /// </summary>
 public class ProductionWebApplicationFactory : WebApplicationFactory<Program>
 {

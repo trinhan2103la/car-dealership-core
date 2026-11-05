@@ -61,7 +61,7 @@ public class CoreServiceDbMigrationService : ITransientDependency
     {
         Logger.LogInformation("Executing host database seed...");
 
-        // Req 25.6: KHÔNG truyền email/mật khẩu mặc định của ABP. SuperAdmin lấy từ biến môi trường
+        // KHÔNG truyền email/mật khẩu mặc định của ABP. SuperAdmin lấy từ biến môi trường
         // SEED_SUPERADMIN_EMAIL / SEED_SUPERADMIN_PASSWORD trong RoleSeedContributor.
         await _dataSeeder.SeedAsync(new DataSeedContext());
     }

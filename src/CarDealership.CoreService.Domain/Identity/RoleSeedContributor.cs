@@ -13,11 +13,11 @@ using AbpIdentityRole = Volo.Abp.Identity.IdentityRole;
 namespace CarDealership.CoreService.Identity;
 
 /// <summary>
-/// Req 15.4, 25.1, 25.9: seed 4 Role cố định, grant theo ma trận, rồi SuperAdmin đầu tiên.
+/// Seed 4 Role cố định, grant theo ma trận, rồi SuperAdmin đầu tiên.
 /// - Idempotent: chạy lại không tạo thêm bản ghi (khóa tự nhiên là tên Role / tên Permission / email).
 /// - CHỈ THÊM grant còn thiếu, không bao giờ gỡ grant khác: không ghi đè chỉnh sửa tay.
-/// - Kiểm cấu hình SuperAdmin TRƯỚC khi ghi gì (Req 25.7); cả lần chạy nằm trong một unit of work để
-///   lỗi giữa chừng rollback toàn bộ (Req 25.9).
+/// - Kiểm cấu hình SuperAdmin TRƯỚC khi ghi gì; cả lần chạy nằm trong một unit of work để
+///   lỗi giữa chừng rollback toàn bộ.
 /// Gom vào một contributor để không phụ thuộc thứ tự chạy giữa các contributor.
 /// </summary>
 public class RoleSeedContributor : IDataSeedContributor, ITransientDependency

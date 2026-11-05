@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ngày 20: tự kiểm script check-abp-packages.sh bằng fixture JSON.
+# Tự kiểm script check-abp-packages.sh bằng fixture JSON.
 #   - pro-package.json    (có Volo.Abp.Identity.Pro.Domain)  -> PHẢI thoát 1 (denylist)
 #   - unlisted-volo.json  (Volo.* ngoài allowlist)           -> PHẢI thoát 1 (allowlist)
 #   - clean.json          (chỉ package hợp lệ)                -> PHẢI thoát 0

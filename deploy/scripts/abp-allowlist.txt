@@ -1,4 +1,4 @@
-# Allowlist package Volo.* (ABP Framework open-source, LGPL-3.0). Ngay 20, Req 29.1-29.3.
+# Allowlist package Volo.* (ABP Framework open-source, LGPL-3.0).
 # Moi package bat dau bang 'Volo.' trong dotnet list package --include-transitive PHAI nam o day.
 # Them package moi: xac nhan no thuoc repo open-source abpframework/abp (khong phai .Pro./Commercial),
 # roi them mot dong (khop CHINH XAC ten, phan biet hoa thuong theo ten chuan cua NuGet).

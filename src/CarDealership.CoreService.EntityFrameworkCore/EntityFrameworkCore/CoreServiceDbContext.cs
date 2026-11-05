@@ -47,7 +47,7 @@ public class CoreServiceDbContext :
     public DbSet<IdentityUserDelegation> UserDelegations { get; set; }
     public DbSet<IdentitySession> Sessions { get; set; }
 
-    //Ngày 30: module Identity của dự án (idn_*)
+    //Module Identity của dự án (idn_*)
     public DbSet<AdminSession> AdminSessions { get; set; }
     public DbSet<LoginAttempt> LoginAttempts { get; set; }
 
@@ -71,7 +71,7 @@ public class CoreServiceDbContext :
         builder.ConfigureAuditLogging();
         builder.ConfigureIdentity();
 
-        /* Ngày 16 (ADR-003): mỗi module của dự án có Configure riêng (hiện rỗng).
+        /* Mỗi module của dự án có Configure riêng (hiện rỗng).
          * Giữ ở đây để khi thêm entity chỉ sửa đúng file module tương ứng. */
         builder.ConfigureCatalog();
         builder.ConfigureShowrooms();

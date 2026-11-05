@@ -19,7 +19,7 @@ using Xunit;
 namespace CarDealership.CoreService.Middleware.Tests;
 
 /// <summary>
-/// Ngày 36 (Req 28.12, 21): hợp đồng của EdgeKeyMiddleware trên pipeline ASP.NET thật (TestServer, không DB/ABP).
+/// Hợp đồng của EdgeKeyMiddleware trên pipeline ASP.NET thật (TestServer, không DB/ABP).
 /// </summary>
 public class EdgeKeyMiddlewareTests
 {

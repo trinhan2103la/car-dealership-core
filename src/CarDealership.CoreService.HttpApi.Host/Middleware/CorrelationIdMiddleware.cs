@@ -7,7 +7,7 @@ using Serilog.Context;
 namespace CarDealership.CoreService.Middleware;
 
 /// <summary>
-/// Ngày 13 (Req 22.2–22.5): chuẩn hóa Correlation_Id.
+/// Chuẩn hóa Correlation_Id.
 /// - Nhận header "X-Correlation-Id"; nếu hợp lệ (^[A-Za-z0-9_-]{1,128}$) thì dùng lại.
 /// - Nếu thiếu hoặc không hợp lệ thì sinh mới (tránh log injection).
 /// - Đẩy vào Serilog LogContext (property "Correlation_Id") để xuất ra mọi dòng log.
@@ -40,7 +40,7 @@ public class CorrelationIdMiddleware
             return Task.CompletedTask;
         });
 
-        // Ngày 33: đẩy cả vào ICorrelationIdProvider của ABP để security log / audit lấy đúng Correlation_Id
+        // Đẩy cả vào ICorrelationIdProvider của ABP để security log / audit lấy đúng Correlation_Id
         // (middleware của ta thay UseCorrelationId của ABP nên provider này không tự được đặt).
         // Host tối giản trong test không có ABP thì bỏ qua.
         var abpProvider = context.RequestServices.GetService<Volo.Abp.Tracing.ICorrelationIdProvider>();

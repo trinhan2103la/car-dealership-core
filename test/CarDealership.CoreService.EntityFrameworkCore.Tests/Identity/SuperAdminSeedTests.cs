@@ -10,7 +10,7 @@ using Xunit;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 26 (Req 25.6–25.8): SuperAdmin ban đầu từ biến môi trường.
+/// SuperAdmin ban đầu từ biến môi trường.
 /// Seeder thật được dựng với options riêng cho từng ca; tài khoản do host test seed sẵn (SuperAdminEmail).
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
@@ -45,7 +45,6 @@ public class SuperAdminSeedTests : CoreServiceEntityFrameworkCoreTestBase
     [Fact]
     public async Task Existing_email_keeps_its_password_when_seeded_again_with_another_password()
     {
-        // Req 25.8
         await WithUnitOfWorkAsync(async () =>
         {
             await NewSeeder(ServiceProvider, CoreServiceTestConsts.SuperAdminEmail, StrongPassword).SeedAsync();
@@ -68,7 +67,7 @@ public class SuperAdminSeedTests : CoreServiceEntityFrameworkCoreTestBase
     [InlineData(OtherEmail, null, SuperAdminSeedOptions.PasswordVariable)]
     [InlineData(OtherEmail, "", SuperAdminSeedOptions.PasswordVariable)]
     [InlineData(OtherEmail, "            ", SuperAdminSeedOptions.PasswordVariable)]
-    [InlineData(OtherEmail, "Aa1!Aa1!Aa1", SuperAdminSeedOptions.PasswordVariable)]   // 11 ký tự, Req 25.7
+    [InlineData(OtherEmail, "Aa1!Aa1!Aa1", SuperAdminSeedOptions.PasswordVariable)]   // 11 ký tự
     public async Task Invalid_configuration_stops_naming_the_variable_and_creates_nobody(
         string? email, string? password, string variable)
     {
@@ -90,7 +89,7 @@ public class SuperAdminSeedTests : CoreServiceEntityFrameworkCoreTestBase
     [Fact]
     public async Task Password_that_fails_complexity_is_rejected_without_leaking_it_and_creates_nobody()
     {
-        // 16 ký tự nhưng toàn chữ thường: qua kiểm độ dài, rớt luật hoa/số/ký tự đặc biệt (quyết định Ngày 24).
+        // 16 ký tự nhưng toàn chữ thường: qua kiểm độ dài, rớt luật hoa/số/ký tự đặc biệt.
         const string weak = "abcdefghijklmnop";
 
         var ex = await Should.ThrowAsync<Exception>(() =>

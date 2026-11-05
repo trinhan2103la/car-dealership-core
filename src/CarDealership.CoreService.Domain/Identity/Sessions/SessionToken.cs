@@ -5,7 +5,7 @@ using System.Text;
 namespace CarDealership.CoreService.Identity.Sessions;
 
 /// <summary>
-/// ADR-005: session id mờ 256 bit. Giá trị gốc CHỈ trả cho client một lần (cookie qua BFF);
+/// Session id mờ 256 bit. Giá trị gốc CHỈ trả cho client một lần (cookie qua BFF);
 /// Core_API chỉ lưu <see cref="Hash"/> (SHA-256). Không bao giờ dùng Guid (chỉ 122 bit ngẫu nhiên).
 /// </summary>
 public static class SessionToken

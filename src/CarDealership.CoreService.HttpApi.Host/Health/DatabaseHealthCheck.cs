@@ -11,7 +11,7 @@ using Volo.Abp.Uow;
 namespace CarDealership.CoreService.Health;
 
 /// <summary>
-/// Ngày 14 (Req 22): kiểm kết nối PostgreSQL cho /health/ready.
+/// Kiểm kết nối PostgreSQL cho /health/ready.
 /// Không dùng package health-check bên thứ ba; gọi thẳng DbContext.CanConnectAsync.
 /// </summary>
 public class DatabaseHealthCheck : IHealthCheck, ITransientDependency

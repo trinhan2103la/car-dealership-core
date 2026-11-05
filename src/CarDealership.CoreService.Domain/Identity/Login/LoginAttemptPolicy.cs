@@ -14,7 +14,7 @@ public readonly record struct LoginAttemptEntry(DateTime AttemptedAt, bool Succe
 public readonly record struct LoginDecision(bool IsLocked, DateTime? LockedUntil, int ConsecutiveFailures);
 
 /// <summary>
-/// Req 14.1, 14.4, 14.5, Property 16: hàm THUẦN quyết định khóa đăng nhập. Không đọc đồng hồ, DB hay ASP.NET
+/// Hàm THUẦN quyết định khóa đăng nhập. Không đọc đồng hồ, DB hay ASP.NET
 /// Identity lockout (chỉ một nguồn sự thật); thời gian đi vào qua tham số <c>now</c> để test được.
 ///
 /// Quy tắc, phát lại lịch sử theo thứ tự thời gian:

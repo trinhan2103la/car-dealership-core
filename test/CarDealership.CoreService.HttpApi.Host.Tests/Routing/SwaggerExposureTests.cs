@@ -6,8 +6,8 @@ using Xunit;
 namespace CarDealership.CoreService.Routing;
 
 /// <summary>
-/// Ngày 22 (Req 29.5, design "Swagger UI chỉ bật ở dev"): Swagger chỉ phục vụ ở Development.
-/// Phát hiện ở nghiệm thu P0 (Ngày 21): container Production vẫn trả 200 cho /swagger.
+/// Swagger chỉ phục vụ ở Development.
+/// Phát hiện ở nghiệm thu P0: container Production vẫn trả 200 cho /swagger.
 /// Cả hai test cần Postgres thật vì AbpRequestLocalizationMiddleware đọc Setting từ DB trước
 /// khi request tới Swagger; không có DB thì bỏ qua (xUnit 2.x không có Assert.SkipUnless).
 /// </summary>

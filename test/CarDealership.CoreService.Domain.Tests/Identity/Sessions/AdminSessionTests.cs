@@ -9,7 +9,7 @@ using Xunit;
 
 namespace CarDealership.CoreService.Identity.Sessions;
 
-/// <summary>Ngày 30 (ADR-005, Req 14.7): session id 256 bit từ CSPRNG; chỉ giữ SHA-256; entity không nhận giá trị gốc.</summary>
+/// <summary>Session id 256 bit từ CSPRNG; chỉ giữ SHA-256; entity không nhận giá trị gốc.</summary>
 public class AdminSessionTests
 {
     private static readonly DateTime Now = new(2026, 10, 31, 4, 0, 0, DateTimeKind.Utc);

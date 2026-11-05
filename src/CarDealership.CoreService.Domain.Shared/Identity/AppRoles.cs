@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace CarDealership.CoreService.Identity;
 
 /// <summary>
-/// Req 15.4: 4 Role cố định của MVP. Tên là khóa tự nhiên (Req 25.1), KHÔNG đổi sau khi đã seed.
+/// 4 Role cố định của MVP. Tên là khóa tự nhiên, KHÔNG đổi sau khi đã seed.
 /// </summary>
 public static class AppRoles
 {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ngày 20 (Req 29.1–29.3): chặn package ABP thương mại / ngoài allowlist.
+# Chặn package ABP thương mại / ngoài allowlist.
 #
 # Dùng:
 #   bash deploy/scripts/check-abp-packages.sh                 # quét solution thật (cần đã `dotnet restore`)
@@ -8,7 +8,7 @@
 # Đầu vào: JSON của `dotnet list <sln> package --include-transitive --format json`
 # (quét cả package trực tiếp lẫn transitive).
 #
-# Luật (design "Giấy phép ABP và danh sách package bị cấm"):
+# Luật:
 #   1. Denylist theo tên: Volo.Abp.Commercial*, Volo.Saas*, Volo.Payment*, Volo.Abp.LeptonTheme*,
 #      Volo.FileManagement*, Volo.Chat*, Volo.Forms*, Volo.Abp.Gdpr*, thành phần ".Pro." / hậu tố ".Pro",
 #      và tên chứa "Commercial".

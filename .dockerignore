@@ -1,4 +1,4 @@
-# Ngày 15: thu nhỏ build context cho Docker (tránh image phình, build chậm).
+# Thu nhỏ build context cho Docker (tránh image phình, build chậm).
 **/bin/
 **/obj/
 **/.vs/

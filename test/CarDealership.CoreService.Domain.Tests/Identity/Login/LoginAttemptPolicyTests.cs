@@ -8,7 +8,7 @@ using Xunit;
 namespace CarDealership.CoreService.Identity.Login;
 
 /// <summary>
-/// Ngày 31 (Req 14.1, 14.4, 14.5): bảng ca biên cho LoginAttemptPolicy. Thời gian đi vào qua tham số,
+/// Bảng ca biên cho LoginAttemptPolicy. Thời gian đi vào qua tham số,
 /// không có đồng hồ thật nên mọi ca xác định.
 /// </summary>
 public class LoginAttemptPolicyTests

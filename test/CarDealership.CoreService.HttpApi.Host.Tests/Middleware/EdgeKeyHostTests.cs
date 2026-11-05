@@ -10,7 +10,7 @@ using Xunit;
 namespace CarDealership.CoreService.Middleware.Tests;
 
 /// <summary>
-/// Ngày 36 (Req 28.12, 16.12): Edge key trên HOST THẬT (toàn bộ pipeline ABP). Các ca "bị chặn" không cần DB vì Edge key
+/// Edge key trên HOST THẬT (toàn bộ pipeline ABP). Các ca "bị chặn" không cần DB vì Edge key
 /// đứng trước localization/routing; ca có khóa thì chỉ kiểm những endpoint không đụng DB.
 /// </summary>
 public class EdgeKeyHostTests : IClassFixture<CoreServiceWebApplicationFactory>
@@ -99,7 +99,7 @@ public class EdgeKeyHostTests : IClassFixture<CoreServiceWebApplicationFactory>
     }
 }
 
-/// <summary>Ngày 36 (Req 16.12): thiếu EDGE_KEY thì host KHÔNG khởi động được.</summary>
+/// <summary>Thiếu EDGE_KEY thì host KHÔNG khởi động được.</summary>
 public class EdgeKeyStartupTests
 {
     private sealed class FactoryWithKey(string? key) : WebApplicationFactory<Program>

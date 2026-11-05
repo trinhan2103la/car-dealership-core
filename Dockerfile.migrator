@@ -1,4 +1,4 @@
-# Ngày 15: image DbMigrator (chạy migration + data seed rồi thoát). Multi-stage, non-root.
+# Image DbMigrator (chạy migration + data seed rồi thoát). Multi-stage, non-root.
 # Build từ ROOT repo car-dealership-core:
 #   docker build -f Dockerfile.migrator -t cdp-migrator .
 

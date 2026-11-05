@@ -22,7 +22,7 @@ namespace CarDealership.CoreService;
     typeof(AbpPermissionManagementDomainIdentityModule),
     typeof(AbpSettingManagementDomainModule),
     typeof(AbpEmailingModule),
-    // Ngày 16 (ADR-003): 7 module nghiệp vụ của dự án (skeleton rỗng).
+    // 7 module nghiệp vụ của dự án (skeleton rỗng).
     typeof(Catalog.CatalogDomainModule),
     typeof(Showrooms.ShowroomsDomainModule),
     typeof(Leads.LeadsDomainModule),
@@ -57,7 +57,7 @@ public class CoreServiceDomainModule : AbpModule
             options.Languages.Add(new LanguageInfo("es", "es", "Español"));
         });
 
-        // Ngày 33 (design "Quy ước chung": thời gian luôn UTC): IClock.Now trả UTC. Mặc định của ABP là Unspecified
+        // IClock.Now trả UTC. Mặc định của ABP là Unspecified
         // (= giờ máy), sẽ làm sai lệch LoginAttemptPolicy / hết hạn session theo múi giờ máy chủ.
         Configure<AbpClockOptions>(options =>
         {

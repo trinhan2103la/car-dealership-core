@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace CarDealership.CoreService;
 
 /// <summary>
-/// Ngày 37: đóng vai BFF trong test, ký service JWT ES256 bằng một cặp khóa tạo MỚI mỗi lần chạy test (không có khóa nào
+/// Đóng vai BFF trong test, ký service JWT ES256 bằng một cặp khóa tạo MỚI mỗi lần chạy test (không có khóa nào
 /// nằm trong repo). Core_API trong test được cấp đúng khóa công khai của cặp này qua <see cref="EdgeKeyTesting"/>.
 /// </summary>
 public static class TestServiceJwt
@@ -20,7 +20,7 @@ public static class TestServiceJwt
     public static SigningCredentials Es256(ECDsa? key = null) =>
         new(new ECDsaSecurityKey(key ?? Key), SecurityAlgorithms.EcdsaSha256) { CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false } };
 
-    /// <summary>Payload hợp lệ theo ADR-004; test sửa từng phần để dựng token sai.</summary>
+    /// <summary>Payload hợp lệ của Service_Credential; test sửa từng phần để dựng token sai.</summary>
     public static Dictionary<string, object> ValidPayload(string scope = "bff", DateTime? now = null)
     {
         var issued = new DateTimeOffset(now ?? DateTime.UtcNow).ToUnixTimeSeconds();

@@ -12,10 +12,10 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.Identity;
 
 /// <summary>
-/// Req 25.6–25.8: tạo SuperAdmin đầu tiên từ biến môi trường.
+/// Tạo SuperAdmin đầu tiên từ biến môi trường.
 /// - Thiếu/rỗng/ngắn hơn 12 ký tự: dừng, thông báo chỉ nêu TÊN BIẾN, không bao giờ in giá trị (25.7).
 /// - Email đã tồn tại: giữ nguyên tài khoản, KHÔNG đổi mật khẩu (25.8).
-/// Độ dài tối đa 128 và luật hoa/thường/số/ký tự đặc biệt do IdentityUserManager áp qua các validator (Ngày 24).
+/// Độ dài tối đa 128 và luật hoa/thường/số/ký tự đặc biệt do IdentityUserManager áp qua các validator.
 /// </summary>
 public class SuperAdminSeeder : ITransientDependency
 {
