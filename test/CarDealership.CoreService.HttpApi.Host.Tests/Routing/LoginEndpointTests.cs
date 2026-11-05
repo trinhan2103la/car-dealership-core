@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Shouldly;
@@ -9,7 +10,7 @@ using Xunit;
 namespace CarDealership.CoreService.Routing;
 
 /// <summary>
-/// Ngày 33: kiểm HTTP thật của POST /api/app/auth/sessions (route, binding, validation, body 401).
+/// Kiểm HTTP thật của POST /api/app/auth/sessions (route, binding, validation, body 401).
 /// Cần PostgreSQL local đã migrate (DbProbe); không có thì bỏ qua như các test khác của project này.
 /// Chỉ dùng email NGẪU NHIÊN không tồn tại nên luôn thất bại và không phụ thuộc mật khẩu SuperAdmin của máy.
 /// Phần chứng minh khóa 5 lần, session, security event nằm ở EntityFrameworkCore.Tests/Identity/LoginTests.
@@ -18,6 +19,8 @@ public class LoginEndpointTests : IClassFixture<CoreServiceWebApplicationFactory
 {
     private const string Url = "/api/app/auth/sessions";
     private const string CurrentUrl = "/api/app/auth/sessions/current";
+    private const string RefreshUrl = "/api/app/auth/sessions/refresh";
+    private const string RevokeUrl = "/api/app/auth/sessions/revoke";
     private readonly CoreServiceWebApplicationFactory _factory;
 
     public LoginEndpointTests(CoreServiceWebApplicationFactory factory)
@@ -78,29 +81,102 @@ public class LoginEndpointTests : IClassFixture<CoreServiceWebApplicationFactory
     }
 
     [Theory]
-    [InlineData("GET", null)]
-    [InlineData("GET", "rac")]
-    [InlineData("GET", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    [InlineData("DELETE", null)]
-    [InlineData("DELETE", "rac")]
-    [InlineData("DELETE", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]
-    public async Task Current_session_without_a_usable_session_id_gets_401_with_one_generic_body(string method, string? header)
+    [InlineData("rac")]
+    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]     // đúng dạng nhưng không tồn tại
+    public async Task Refresh_and_revoke_with_an_unusable_token_get_401_with_one_generic_body(string token)
     {
         if (!DbProbe.IsMigratedDatabaseAvailable())
         {
             return;
         }
 
-        var request = new HttpRequestMessage(new HttpMethod(method), CurrentUrl);
-        if (header is not null)
+        var client = _factory.CreateClient();
+        foreach (var url in new[] { RefreshUrl, RevokeUrl })
         {
-            request.Headers.TryAddWithoutValidation("X-Admin-Session", header);
+            var res = await client.PostAsJsonAsync(url, new { refreshToken = token });
+
+            res.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+            var body = await res.Content.ReadAsStringAsync();
+            body.ShouldContain("unauthenticated");
+            body.ShouldNotContain(token);
+        }
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"refreshToken\":\"\"}")]
+    public async Task Refresh_without_a_token_gets_400(string json)
+    {
+        if (!DbProbe.IsMigratedDatabaseAvailable())
+        {
+            return;
         }
 
-        var res = await _factory.CreateClient().SendAsync(request);
+        var res = await _factory.CreateClient().PostAsync(RefreshUrl,
+            new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+
+        res.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Current_session_without_admin_identity_claims_gets_401()
+    {
+        if (!DbProbe.IsMigratedDatabaseAvailable())
+        {
+            return;
+        }
+
+        // Service JWT hợp lệ nhưng không có sub/sid: không có phiên nào để tra.
+        var res = await _factory.CreateClient().GetAsync(CurrentUrl);
 
         res.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
         (await res.Content.ReadAsStringAsync()).ShouldContain("unauthenticated");
+    }
+
+    [Fact]
+    public async Task Current_session_with_a_well_formed_but_unknown_session_gets_401()
+    {
+        if (!DbProbe.IsMigratedDatabaseAvailable())
+        {
+            return;
+        }
+
+        var payload = TestServiceJwt.ValidPayload(now: DateTime.UtcNow.AddSeconds(-2));
+        payload["sub"] = Guid.NewGuid().ToString();
+        payload["sid"] = Guid.NewGuid().ToString();
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestServiceJwt.Create(payload));
+
+        var res = await client.GetAsync(CurrentUrl);
+
+        res.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await res.Content.ReadAsStringAsync()).ShouldContain("unauthenticated");
+    }
+
+    [Theory]
+    [InlineData("sub", null)]                 // có sub mà không có sid
+    [InlineData(null, "sid")]                 // có sid mà không có sub
+    [InlineData("not-a-guid", "not-a-guid")]  // sai dạng
+    public async Task Service_jwt_with_an_inconsistent_admin_identity_is_rejected_at_authentication(string? sub, string? sid)
+    {
+        var payload = TestServiceJwt.ValidPayload(now: DateTime.UtcNow.AddSeconds(-2));
+        if (sub is not null)
+        {
+            payload["sub"] = sub == "sub" ? Guid.NewGuid().ToString() : sub;
+        }
+
+        if (sid is not null)
+        {
+            payload["sid"] = sid == "sid" ? Guid.NewGuid().ToString() : sid;
+        }
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", TestServiceJwt.Create(payload));
+
+        // /health/ready cần JWT (fallback policy) nên chứng minh được 401 ở bước xác thực, trước cả khi chạm controller.
+        var res = await client.GetAsync("/health/ready");
+
+        res.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -115,6 +191,8 @@ public class LoginEndpointTests : IClassFixture<CoreServiceWebApplicationFactory
 
         (await client.PostAsJsonAsync(CurrentUrl, new { })).StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
         (await client.PutAsJsonAsync(CurrentUrl, new { })).StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
+        (await client.DeleteAsync(CurrentUrl)).StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);   // Bỏ DELETE
+        (await client.GetAsync(RefreshUrl)).StatusCode.ShouldBe(HttpStatusCode.MethodNotAllowed);
     }
 
     [Fact]

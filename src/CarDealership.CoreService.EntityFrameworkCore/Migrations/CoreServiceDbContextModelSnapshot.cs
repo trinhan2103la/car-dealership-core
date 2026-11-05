@@ -70,9 +70,22 @@ namespace CarDealership.CoreService.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_seen_at");
 
+                    b.Property<byte[]>("PreviousTokenHash")
+                        .HasColumnType("bytea")
+                        .HasColumnName("previous_token_hash");
+
+                    b.Property<string>("RevokeReason")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("revoke_reason");
+
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoked_at");
+
+                    b.Property<DateTime?>("RotatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rotated_at");
 
                     b.Property<byte[]>("TokenHash")
                         .IsRequired()
@@ -85,6 +98,10 @@ namespace CarDealership.CoreService.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PreviousTokenHash")
+                        .HasDatabaseName("ix_idn_admin_sessions_previous_token_hash")
+                        .HasFilter("previous_token_hash IS NOT NULL");
+
                     b.HasIndex("TokenHash")
                         .IsUnique()
                         .HasDatabaseName("ux_idn_admin_sessions_token_hash");
@@ -95,6 +112,8 @@ namespace CarDealership.CoreService.Migrations
 
                     b.ToTable("idn_admin_sessions", null, t =>
                         {
+                            t.HasCheckConstraint("ck_idn_admin_sessions_previous_token_hash_len", "previous_token_hash IS NULL OR octet_length(previous_token_hash) = 32");
+
                             t.HasCheckConstraint("ck_idn_admin_sessions_token_hash_len", "octet_length(token_hash) = 32");
                         });
                 });

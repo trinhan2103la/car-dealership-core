@@ -9,7 +9,7 @@ using Volo.Abp.Uow;
 namespace CarDealership.CoreService.Identity;
 
 /// <summary>
-/// Req 14.9: khi một user được lưu với IsActive = false (từ bất kỳ đường nào: màn hình quản trị sau này, script, seed),
+/// Khi một user được lưu với IsActive = false (từ bất kỳ đường nào: màn hình quản trị sau này, script, seed),
 /// thu hồi ngay mọi session của user đó và ghi security event. Đây là lớp phòng thủ thứ nhất; lớp thứ hai là
 /// <see cref="SessionResolver"/> kiểm IsActive ở MỖI request, nên dù sự kiện này lỡ thì session cũ vẫn bị từ chối.
 /// </summary>
@@ -44,7 +44,7 @@ public class UserDeactivatedSessionRevoker :
 
         using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
 
-        var revoked = await _revocation.RevokeAllAsync(user.Id, _clock.Now);
+        var revoked = await _revocation.RevokeAllAsync(user.Id, _clock.Now, SessionRevokeReasons.UserInactive);
         if (revoked > 0)
         {
             await _events.WriteAsync(SecurityEventActions.SessionsRevoked, user.Email, user.Id, "UserInactive");

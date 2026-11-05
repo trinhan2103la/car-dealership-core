@@ -12,11 +12,11 @@ using Volo.Abp.Uow;
 namespace CarDealership.CoreService.Identity;
 
 /// <summary>
-/// ADR-005, Req 14.7–14.9: tra session theo session id gốc cho mỗi request quản trị.
-/// - Chỉ chấp nhận chuỗi đúng dạng 43 ký tự base64url (rác bị loại trước khi chạm DB).
-/// - Tra bằng SHA-256; thu hồi hoặc quá 30 phút không hoạt động thì từ chối và KHÔNG ghi gì.
-/// - User bị Inactive/xóa: thu hồi mọi session của user đó rồi từ chối (hiệu lực ngay, tốt hơn mức 5 phút của Req 14.9).
-/// - Thành công thì trượt <c>last_seen_at</c> về hiện tại.
+/// Tra phiên cho mỗi request quản trị theo claim <c>sid</c> + <c>sub</c> của Service_Credential.
+/// - Tra theo khóa chính (rẻ); KHÔNG ghi gì khi thành công (idle 3 ngày tính theo lần refresh, không theo từng request).
+/// - Phiên thu hồi / hết hạn / không thuộc user trong claim → từ chối. Nhờ vậy đăng xuất hay phát hiện dùng lại refresh
+///   token có hiệu lực NGAY, dù access token (10 phút) còn hạn.
+/// - User bị Inactive/xóa: thu hồi mọi phiên của user rồi từ chối (hiệu lực ngay).
 /// Mọi lý do thất bại cho cùng một kết quả null.
 /// </summary>
 public class SessionResolver : ISessionResolver, ITransientDependency
@@ -47,9 +47,9 @@ public class SessionResolver : ISessionResolver, ITransientDependency
         _clock = clock;
     }
 
-    public async Task<ResolvedAdminSession?> ResolveAsync(string? sessionId)
+    public async Task<ResolvedAdminSession?> ResolveAsync(Guid? sessionId, Guid? userId)
     {
-        if (!SessionToken.IsWellFormed(sessionId))
+        if (sessionId is null || userId is null || sessionId == Guid.Empty || userId == Guid.Empty)
         {
             return null;
         }
@@ -58,8 +58,9 @@ public class SessionResolver : ISessionResolver, ITransientDependency
 
         using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: true);
 
-        var session = await FindAsync(sessionId!);
-        if (session is null || !session.IsActiveAt(now))
+        var query = (await _sessions.GetQueryableAsync()).Where(s => s.Id == sessionId.Value);
+        var session = await _executer.FirstOrDefaultAsync(query);
+        if (session is null || session.UserId != userId.Value || !session.IsActiveAt(now))
         {
             return null;   // không hoàn tất UoW: không ghi gì
         }
@@ -67,25 +68,27 @@ public class SessionResolver : ISessionResolver, ITransientDependency
         var user = await _userManager.FindByIdAsync(session.UserId.ToString());
         if (user is null || !user.IsActive)
         {
-            var revoked = await _revocation.RevokeAllAsync(session.UserId, now);
-            await _events.WriteAsync(SecurityEventActions.SessionsRevoked, user?.Email, session.UserId,
-                revoked > 0 ? "UserInactive" : "UserInactiveNoActiveSession");
+            await RevokeInactiveAsync(session.UserId, user?.Email, now);
             await uow.CompleteAsync();
             return null;
         }
 
-        session.Touch(now);
-        await _sessions.UpdateAsync(session, autoSave: true);
-        await uow.CompleteAsync();
-
         return new ResolvedAdminSession(session.Id, user.Id, user.Email);
     }
 
-    /// <summary>Tra theo hash trong UoW hiện tại (entity được theo dõi để cập nhật).</summary>
-    internal async Task<AdminSession?> FindAsync(string sessionId)
+    /// <summary>Thu hồi mọi phiên của user Inactive + ghi security event. Gọi trong UoW của người gọi.</summary>
+    internal async Task RevokeInactiveAsync(Guid userId, string? email, DateTime now)
     {
-        var hash = SessionToken.Hash(sessionId);
-        var query = (await _sessions.GetQueryableAsync()).Where(s => s.TokenHash == hash);
+        var revoked = await _revocation.RevokeAllAsync(userId, now, SessionRevokeReasons.UserInactive);
+        await _events.WriteAsync(SecurityEventActions.SessionsRevoked, email, userId,
+            revoked > 0 ? "UserInactive" : "UserInactiveNoActiveSession");
+    }
+
+    /// <summary>Tìm family theo hash của refresh token hiện hành HOẶC token vừa bị thay (trong UoW hiện tại, entity được theo dõi).</summary>
+    internal async Task<AdminSession?> FindByRefreshTokenAsync(byte[] hash)
+    {
+        var query = (await _sessions.GetQueryableAsync())
+            .Where(s => s.TokenHash == hash || s.PreviousTokenHash == hash);
         return await _executer.FirstOrDefaultAsync(query);
     }
 }

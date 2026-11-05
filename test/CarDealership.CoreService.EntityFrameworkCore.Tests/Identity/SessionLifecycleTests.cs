@@ -16,14 +16,15 @@ using AbpIdentityUser = Volo.Abp.Identity.IdentityUser;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 34 (Req 14.7, 14.8, 14.9, 17): vòng đời session trên PostgreSQL thật. Đồng hồ là <see cref="TestClock"/>
-/// nên các mốc 29:59 / 30:00 / 30:01 chạy tức thì.
+/// Vòng đời phiên = family refresh token trên PostgreSQL thật.
+/// Đồng hồ là <see cref="TestClock"/> nên các mốc 3 ngày / 7 ngày / 20 giây chạy tức thì.
 /// </summary>
 [Collection(CoreServiceTestConsts.CollectionDefinitionName)]
 [Trait("Category", "Integration")]
 public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDisposable
 {
     private const string GoodPassword = "Good-Passw0rd!2026";
+    private const string WellFormedUnknown = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
     private TestClock Clock => GetRequiredService<TestClock>();
 
@@ -52,24 +53,24 @@ public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDi
         return (email, id);
     }
 
-    private async Task<string> LoginAsync(string email, string password = GoodPassword)
+    private async Task<LoginResultDto> LoginAsync(string email, string password = GoodPassword)
     {
         var result = await WithUnitOfWorkAsync(() => Sessions.LoginAsync(new LoginInput { Email = email, Password = password }));
         result.ShouldNotBeNull();
-        return result.SessionId;
+        return result;
     }
 
-    private Task<CurrentSessionDto?> CurrentAsync(string? sessionId) =>
-        WithUnitOfWorkAsync(() => Sessions.GetCurrentAsync(sessionId));
+    private Task<LoginResultDto?> RefreshAsync(string? token) =>
+        WithUnitOfWorkAsync(() => Sessions.RefreshAsync(token));
 
-    private Task<bool> LogoutAsync(string? sessionId) =>
-        WithUnitOfWorkAsync(() => Sessions.LogoutAsync(sessionId));
+    private Task<bool> RevokeAsync(string? token) =>
+        WithUnitOfWorkAsync(() => Sessions.RevokeAsync(token));
 
-    private Task<AdminSession> RowAsync(string sessionId)
-    {
-        var hash = SessionToken.Hash(sessionId);
-        return WithDbAsync(db => db.AdminSessions.AsNoTracking().SingleAsync(s => s.TokenHash == hash));
-    }
+    private Task<CurrentSessionDto?> CurrentAsync(LoginResultDto login) =>
+        WithUnitOfWorkAsync(() => Sessions.GetCurrentAsync(login.SessionId, login.UserId));
+
+    private Task<AdminSession> RowAsync(Guid sessionId) =>
+        WithDbAsync(db => db.AdminSessions.AsNoTracking().SingleAsync(s => s.Id == sessionId));
 
     private Task<List<IdentitySecurityLog>> SecurityLogsAsync() =>
         WithDbAsync(db => db.SecurityLogs.AsNoTracking().OrderBy(l => l.CreationTime).ToListAsync());
@@ -85,132 +86,242 @@ public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDi
         });
     }
 
-    // ---------- tra session ----------
+    // ---------- đăng nhập + tra phiên theo claim ----------
 
     [Fact]
-    public async Task Valid_session_returns_identity_roles_and_permissions()
+    public async Task Login_returns_a_refresh_token_session_id_and_7_day_expiry()
     {
         var (email, userId) = await CreateUserAsync();
-        var session = await LoginAsync(email);
 
-        var current = await CurrentAsync(session);
+        var login = await LoginAsync(email);
+
+        SessionToken.IsWellFormed(login.RefreshToken).ShouldBeTrue();
+        login.SessionId.ShouldNotBe(Guid.Empty);
+        login.UserId.ShouldBe(userId);
+        login.Permissions.ShouldBe(new[] { "Leads.Manage", "Leads.View" });
+        (login.SessionExpiresAt - (await RowAsync(login.SessionId)).CreatedAt).ShouldBe(TimeSpan.FromDays(7));
+    }
+
+    [Fact]
+    public async Task Current_by_sid_and_sub_returns_identity_roles_and_permissions_and_writes_nothing()
+    {
+        var (email, userId) = await CreateUserAsync();
+        var login = await LoginAsync(email);
+        var before = await RowAsync(login.SessionId);
+
+        Clock.Advance(TimeSpan.FromMinutes(5));
+        var current = await CurrentAsync(login);
 
         current.ShouldNotBeNull();
+        current.SessionId.ShouldBe(login.SessionId);
         current.UserId.ShouldBe(userId);
         current.Email.ShouldBe(email);
         current.Roles.ShouldBe(new[] { "SalesStaff" });
         current.Permissions.ShouldBe(new[] { "Leads.Manage", "Leads.View" });
+        (await RowAsync(login.SessionId)).LastSeenAt.ShouldBe(before.LastSeenAt);   // tra mỗi request không ghi DB
     }
 
     [Fact]
-    public async Task Every_successful_lookup_slides_last_seen_to_now()
+    public async Task Current_with_a_sid_of_another_user_or_missing_claims_is_refused()
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
-        var created = (await RowAsync(session)).LastSeenAt;
+        var login = await LoginAsync(email);
+
+        (await WithUnitOfWorkAsync(() => Sessions.GetCurrentAsync(login.SessionId, Guid.NewGuid()))).ShouldBeNull();
+        (await WithUnitOfWorkAsync(() => Sessions.GetCurrentAsync(Guid.NewGuid(), login.UserId))).ShouldBeNull();
+        (await WithUnitOfWorkAsync(() => Sessions.GetCurrentAsync(null, login.UserId))).ShouldBeNull();
+        (await WithUnitOfWorkAsync(() => Sessions.GetCurrentAsync(login.SessionId, null))).ShouldBeNull();
+    }
+
+    // ---------- xoay vòng ----------
+
+    [Fact]
+    public async Task Refresh_rotates_the_token_and_slides_the_idle_window()
+    {
+        var (email, _) = await CreateUserAsync();
+        var login = await LoginAsync(email);
 
         Clock.Advance(TimeSpan.FromMinutes(10));
-        await CurrentAsync(session);
+        var refreshed = await RefreshAsync(login.RefreshToken);
 
-        var after = (await RowAsync(session)).LastSeenAt;
-        (after - created).ShouldBeGreaterThan(TimeSpan.FromMinutes(9));
-        (after - created).ShouldBeLessThan(TimeSpan.FromMinutes(11));
+        refreshed.ShouldNotBeNull();
+        refreshed.RefreshToken.ShouldNotBeNull();
+        refreshed.RefreshToken.ShouldNotBe(login.RefreshToken);
+        refreshed.SessionId.ShouldBe(login.SessionId);
+        refreshed.SessionExpiresAt.ShouldBe(login.SessionExpiresAt);   // tuyệt đối KHÔNG trượt
+
+        var row = await RowAsync(login.SessionId);
+        row.TokenHash.ShouldBe(SessionToken.Hash(refreshed.RefreshToken));
+        row.PreviousTokenHash.ShouldBe(SessionToken.Hash(login.RefreshToken!));
+        (row.LastSeenAt - row.CreatedAt).ShouldBeGreaterThan(TimeSpan.FromMinutes(9));
     }
+
+    [Fact]
+    public async Task Previous_token_inside_the_20_second_grace_is_accepted_without_rotating()
+    {
+        var (email, _) = await CreateUserAsync();
+        var login = await LoginAsync(email);
+        var rotated = await RefreshAsync(login.RefreshToken);
+        var before = await RowAsync(login.SessionId);
+
+        Clock.Advance(TimeSpan.FromSeconds(10));
+        var again = await RefreshAsync(login.RefreshToken);   // tab thứ hai trình token cũ
+
+        again.ShouldNotBeNull();
+        again.RefreshToken.ShouldBeNull();                     // không phát token mới: BFF giữ nguyên cookie
+        again.SessionId.ShouldBe(login.SessionId);
+        var after = await RowAsync(login.SessionId);
+        after.TokenHash.ShouldBe(before.TokenHash);
+        after.RevokedAt.ShouldBeNull();
+        (await RefreshAsync(rotated!.RefreshToken)).ShouldNotBeNull();   // token hiện hành vẫn dùng được
+    }
+
+    [Fact]
+    public async Task Reusing_a_rotated_token_after_the_grace_revokes_the_whole_family()
+    {
+        var (email, userId) = await CreateUserAsync();
+        var login = await LoginAsync(email);
+        var rotated = await RefreshAsync(login.RefreshToken);
+
+        Clock.Advance(TimeSpan.FromSeconds(25));
+        (await RefreshAsync(login.RefreshToken)).ShouldBeNull();   // kẻ gian (hoặc chủ thật) dùng lại token cũ
+
+        var row = await RowAsync(login.SessionId);
+        row.RevokedAt.ShouldNotBeNull();
+        row.RevokeReason.ShouldBe(SessionRevokeReasons.RefreshTokenReuse);
+        (await RefreshAsync(rotated!.RefreshToken)).ShouldBeNull();   // token "hợp lệ" cũng chết theo
+        (await CurrentAsync(login)).ShouldBeNull();                   // access token còn hạn bị từ chối ngay
+
+        var reuse = (await SecurityLogsAsync()).Where(l => l.Action == SecurityEventActions.RefreshTokenReuse).ToList();
+        reuse.Count.ShouldBe(1);
+        reuse[0].UserId.ShouldBe(userId);
+    }
+
+    [Fact]
+    public async Task Two_concurrent_refreshes_with_the_same_token_both_succeed_and_rotate_exactly_once()
+    {
+        var (email, _) = await CreateUserAsync();
+        var login = await LoginAsync(email);
+
+        var results = await Task.WhenAll(RefreshAsync(login.RefreshToken), RefreshAsync(login.RefreshToken));
+
+        results.ShouldAllBe(r => r != null);
+        results.Count(r => r!.RefreshToken is not null).ShouldBe(1);
+        var issued = results.Single(r => r!.RefreshToken is not null)!.RefreshToken!;
+        (await RowAsync(login.SessionId)).TokenHash.ShouldBe(SessionToken.Hash(issued));
+    }
+
+    // ---------- idle 3 ngày, tuyệt đối 7 ngày ----------
 
     [Theory]
-    [InlineData(29 * 60 + 55, true)]
-    [InlineData(30 * 60, false)]
-    [InlineData(30 * 60 + 1, false)]
-    public async Task Session_idle_29_55_ok_and_30_00_30_01_expired(int idleSeconds, bool expectedUsable)
+    [InlineData(3 * 86400 - 5, true)]
+    [InlineData(3 * 86400, false)]
+    [InlineData(3 * 86400 + 1, false)]
+    public async Task Refresh_after_3_days_idle_is_refused(int idleSeconds, bool expectedUsable)
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var login = await LoginAsync(email);
 
-        // Dự phòng 5 giây cho thời gian thật trôi giữa lúc đăng nhập và lúc tra (mốc 29:59 chính xác nằm ở SessionLifetimeTests, đồng hồ thuần).
+        // Dự phòng 5 giây cho thời gian thật trôi (mốc chính xác nằm ở SessionLifetimeTests, đồng hồ thuần).
         Clock.Advance(TimeSpan.FromSeconds(idleSeconds));
-        var current = await CurrentAsync(session);
+        var refreshed = await RefreshAsync(login.RefreshToken);
 
-        if (expectedUsable)
-        {
-            current.ShouldNotBeNull();
-        }
-        else
-        {
-            current.ShouldBeNull();
-        }
+        (refreshed is not null).ShouldBe(expectedUsable);
     }
 
     [Fact]
-    public async Task Activity_keeps_the_session_alive_beyond_30_minutes_in_total()
+    public async Task Continuous_use_ends_7_days_after_login()
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var login = await LoginAsync(email);
+        var token = login.RefreshToken;
 
-        for (var i = 0; i < 4; i++)
+        for (var day = 0; day < 6; day++)
         {
-            Clock.Advance(TimeSpan.FromMinutes(20));
-            (await CurrentAsync(session)).ShouldNotBeNull();   // 80 phút tổng cộng, mỗi lần cách 20 phút
+            Clock.Advance(TimeSpan.FromDays(1));
+            var refreshed = await RefreshAsync(token);
+            refreshed.ShouldNotBeNull();
+            token = refreshed.RefreshToken;
         }
 
-        Clock.Advance(TimeSpan.FromMinutes(31));
-        (await CurrentAsync(session)).ShouldBeNull();
+        Clock.Advance(TimeSpan.FromDays(1));   // đủ 7 ngày từ lúc đăng nhập
+        (await RefreshAsync(token)).ShouldBeNull();
+        (await CurrentAsync(login)).ShouldBeNull();
     }
 
     [Fact]
-    public async Task Expired_lookup_writes_nothing_and_stays_expired()
+    public async Task Expired_refresh_writes_nothing()
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
-        var before = await RowAsync(session);
+        var login = await LoginAsync(email);
+        var before = await RowAsync(login.SessionId);
 
-        Clock.Advance(TimeSpan.FromMinutes(45));
-        (await CurrentAsync(session)).ShouldBeNull();
-        (await CurrentAsync(session)).ShouldBeNull();
+        Clock.Advance(TimeSpan.FromDays(4));
+        (await RefreshAsync(login.RefreshToken)).ShouldBeNull();
 
-        var after = await RowAsync(session);
+        var after = await RowAsync(login.SessionId);
+        after.TokenHash.ShouldBe(before.TokenHash);
         after.LastSeenAt.ShouldBe(before.LastSeenAt);
         after.RevokedAt.ShouldBeNull();
     }
+
+    // ---------- token rác ----------
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("rac")]
     [InlineData("'; DROP TABLE idn_admin_sessions; --")]
-    [InlineData("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")]     // đúng dạng nhưng không tồn tại
-    public async Task Missing_malformed_or_unknown_session_ids_are_rejected(string? sessionId)
+    [InlineData(WellFormedUnknown)]
+    public async Task Missing_malformed_or_unknown_tokens_are_rejected(string? token)
     {
-        (await CurrentAsync(sessionId)).ShouldBeNull();
-        (await LogoutAsync(sessionId)).ShouldBeFalse();
+        (await RefreshAsync(token)).ShouldBeNull();
+        (await RevokeAsync(token)).ShouldBeFalse();
     }
 
     [Fact]
-    public async Task The_stored_hash_is_not_accepted_as_a_session_id()
+    public async Task The_stored_hash_is_not_accepted_as_a_refresh_token()
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
-        var hashAsText = Convert.ToBase64String((await RowAsync(session)).TokenHash).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        var login = await LoginAsync(email);
+        var hashAsText = Convert.ToBase64String((await RowAsync(login.SessionId)).TokenHash)
+            .TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
-        (await CurrentAsync(hashAsText)).ShouldBeNull();
+        (await RefreshAsync(hashAsText)).ShouldBeNull();
     }
 
     // ---------- đăng xuất ----------
 
     [Fact]
-    public async Task Logout_revokes_the_session_and_the_old_session_id_is_refused_afterwards()
+    public async Task Revoke_ends_the_session_immediately_for_refresh_and_for_live_access_tokens()
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var login = await LoginAsync(email);
 
-        (await LogoutAsync(session)).ShouldBeTrue();
+        (await RevokeAsync(login.RefreshToken)).ShouldBeTrue();
 
-        (await RowAsync(session)).RevokedAt.ShouldNotBeNull();
-        (await CurrentAsync(session)).ShouldBeNull();     // cookie cũ gửi lại bị từ chối (Req 14.8)
-        (await LogoutAsync(session)).ShouldBeFalse();     // đăng xuất lần hai: không còn gì để thu hồi
+        var row = await RowAsync(login.SessionId);
+        row.RevokedAt.ShouldNotBeNull();
+        row.RevokeReason.ShouldBe(SessionRevokeReasons.Logout);
+        (await RefreshAsync(login.RefreshToken)).ShouldBeNull();   // cookie cũ gửi lại bị từ chối
+        (await CurrentAsync(login)).ShouldBeNull();                // access token chưa hết 10 phút cũng bị từ chối
+        (await RevokeAsync(login.RefreshToken)).ShouldBeFalse();   // lần hai: không còn gì để thu hồi
     }
 
     [Fact]
-    public async Task Logout_only_affects_that_session_not_other_sessions_of_the_same_or_other_users()
+    public async Task Revoke_with_the_token_just_replaced_inside_the_grace_also_logs_out()
+    {
+        var (email, _) = await CreateUserAsync();
+        var login = await LoginAsync(email);
+        await RefreshAsync(login.RefreshToken);
+
+        (await RevokeAsync(login.RefreshToken)).ShouldBeTrue();
+
+        (await RowAsync(login.SessionId)).RevokedAt.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Revoke_only_affects_that_session()
     {
         var (email, _) = await CreateUserAsync();
         var (otherEmail, _) = await CreateUserAsync();
@@ -218,7 +329,7 @@ public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDi
         var second = await LoginAsync(email);
         var other = await LoginAsync(otherEmail);
 
-        await LogoutAsync(first);
+        await RevokeAsync(first.RefreshToken);
 
         (await CurrentAsync(first)).ShouldBeNull();
         (await CurrentAsync(second)).ShouldNotBeNull();
@@ -226,29 +337,22 @@ public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDi
     }
 
     [Fact]
-    public async Task Logout_is_recorded_as_a_security_event_without_the_session_id()
+    public async Task Logout_is_recorded_without_the_refresh_token_and_failed_logout_records_nothing()
     {
         var (email, userId) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var login = await LoginAsync(email);
 
-        await LogoutAsync(session);
+        await RevokeAsync(WellFormedUnknown);
+        (await SecurityLogsAsync()).ShouldNotContain(l => l.Action == SecurityEventActions.Logout && l.UserId == userId);
 
-        var logs = await SecurityLogsAsync();
-        var logout = logs.Where(l => l.Action == SecurityEventActions.Logout).ToList();
+        await RevokeAsync(login.RefreshToken);
+
+        var logout = (await SecurityLogsAsync()).Where(l => l.Action == SecurityEventActions.Logout && l.UserId == userId).ToList();
         logout.Count.ShouldBe(1);
-        logout[0].UserId.ShouldBe(userId);
         logout[0].UserName.ShouldBe(email);
 
         var dump = await WithDbAsync(db => db.Database.SqlQuery<string>($"select t::text as \"Value\" from \"AbpSecurityLogs\" t").ToListAsync());
-        dump.ShouldAllBe(row => !row.Contains(session));
-    }
-
-    [Fact]
-    public async Task Failed_logout_writes_no_security_event()
-    {
-        await LogoutAsync("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-
-        (await SecurityLogsAsync()).ShouldNotContain(l => l.Action == SecurityEventActions.Logout);
+        dump.ShouldAllBe(row => !row.Contains(login.RefreshToken!));
     }
 
     // ---------- user Inactive ----------
@@ -264,48 +368,44 @@ public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDi
 
         await SetActiveAsync(userId, false);
 
-        // Sự kiện cập nhật user phải thu hồi ngay ở DB, không đợi tới lần tra kế tiếp.
-        (await RowAsync(first)).RevokedAt.ShouldNotBeNull();
-        (await RowAsync(second)).RevokedAt.ShouldNotBeNull();
-        (await RowAsync(other)).RevokedAt.ShouldBeNull();
+        (await RowAsync(first.SessionId)).RevokeReason.ShouldBe(SessionRevokeReasons.UserInactive);
+        (await RowAsync(second.SessionId)).RevokedAt.ShouldNotBeNull();
+        (await RowAsync(other.SessionId)).RevokedAt.ShouldBeNull();
 
         (await CurrentAsync(first)).ShouldBeNull();
-        (await CurrentAsync(second)).ShouldBeNull();
+        (await RefreshAsync(second.RefreshToken)).ShouldBeNull();
         (await CurrentAsync(other)).ShouldNotBeNull();
-
-        var revoked = (await SecurityLogsAsync()).Where(l => l.Action == SecurityEventActions.SessionsRevoked).ToList();
-        revoked.Count.ShouldBe(1);
-        revoked[0].UserId.ShouldBe(userId);
     }
 
     [Fact]
     public async Task Reactivating_the_user_does_not_resurrect_old_sessions()
     {
         var (email, userId) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var login = await LoginAsync(email);
 
         await SetActiveAsync(userId, false);
         await SetActiveAsync(userId, true);
 
-        (await CurrentAsync(session)).ShouldBeNull();
-        (await LoginAsync(email)).ShouldNotBeNull();      // đăng nhập lại bình thường
+        (await RefreshAsync(login.RefreshToken)).ShouldBeNull();
+        (await LoginAsync(email)).ShouldNotBeNull();
     }
 
     [Fact]
-    public async Task Resolver_alone_rejects_and_revokes_even_if_the_deactivation_event_was_missed()
+    public async Task Resolver_and_refresh_reject_and_revoke_even_if_the_deactivation_event_was_missed()
     {
         var (email, userId) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var viaCurrent = await LoginAsync(email);
+        var viaRefresh = await LoginAsync(email);
 
-        // Ghi thẳng vào DB bằng SQL: không phát sự kiện thực thể nào, mô phỏng đường vô hiệu hóa không qua ABP.
+        // Ghi thẳng bằng SQL: không phát sự kiện thực thể nào, mô phỏng đường vô hiệu hóa không qua ABP.
         await WithDbAsync(db => db.Database.ExecuteSqlRawAsync(
             "update \"AbpUsers\" set \"IsActive\" = false where \"Id\" = {0}", userId));
+        (await RowAsync(viaCurrent.SessionId)).RevokedAt.ShouldBeNull();
 
-        (await RowAsync(session)).RevokedAt.ShouldBeNull();   // chưa ai thu hồi
-
-        (await CurrentAsync(session)).ShouldBeNull();          // nhưng request kế tiếp bị từ chối
-
-        (await RowAsync(session)).RevokedAt.ShouldNotBeNull(); // và session được thu hồi luôn
+        (await CurrentAsync(viaCurrent)).ShouldBeNull();
+        (await RowAsync(viaCurrent.SessionId)).RevokedAt.ShouldNotBeNull();
+        (await RowAsync(viaRefresh.SessionId)).RevokedAt.ShouldNotBeNull();   // thu hồi MỌI phiên của user
+        (await RefreshAsync(viaRefresh.RefreshToken)).ShouldBeNull();
     }
 
     [Fact]
@@ -322,24 +422,24 @@ public class SessionLifecycleTests : CoreServiceEntityFrameworkCoreTestBase, IDi
     // ---------- controller ----------
 
     [Fact]
-    public async Task Controller_maps_current_and_logout_to_200_204_and_one_generic_401()
+    public async Task Controller_maps_refresh_revoke_current_to_200_204_and_one_generic_401()
     {
         var (email, _) = await CreateUserAsync();
-        var session = await LoginAsync(email);
+        var login = await LoginAsync(email);
         var controller = ActivatorUtilities.CreateInstance<SessionController>(ServiceProvider);
 
-        var current = await WithUnitOfWorkAsync(() => controller.GetCurrentAsync(session));
-        current.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<CurrentSessionDto>();
+        var refresh = await WithUnitOfWorkAsync(() => controller.RefreshAsync(new RefreshTokenInput { RefreshToken = login.RefreshToken! }));
+        var rotated = refresh.ShouldBeOfType<OkObjectResult>().Value.ShouldBeOfType<LoginResultDto>();
 
-        var logout = await WithUnitOfWorkAsync(() => controller.LogoutAsync(session));
-        logout.StatusCode.ShouldBe(204);
+        var revoke = await WithUnitOfWorkAsync(() => controller.RevokeAsync(new RefreshTokenInput { RefreshToken = rotated.RefreshToken! }));
+        revoke.StatusCode.ShouldBe(204);
 
         var bodies = new List<SessionFailureDto>();
         foreach (var result in new[]
                  {
-                     await WithUnitOfWorkAsync(() => controller.GetCurrentAsync(session)),          // đã đăng xuất
-                     await WithUnitOfWorkAsync(() => controller.GetCurrentAsync(null)),             // thiếu header
-                     await WithUnitOfWorkAsync(() => controller.LogoutAsync("rac")),                // sai dạng
+                     await WithUnitOfWorkAsync(() => controller.RefreshAsync(new RefreshTokenInput { RefreshToken = rotated.RefreshToken! })),  // đã đăng xuất
+                     await WithUnitOfWorkAsync(() => controller.RevokeAsync(new RefreshTokenInput { RefreshToken = "rac" })),                   // sai dạng
+                     await WithUnitOfWorkAsync(() => controller.GetCurrentAsync()),                                                            // không có claim
                  })
         {
             bodies.Add(result.ShouldBeOfType<UnauthorizedObjectResult>().Value.ShouldBeOfType<SessionFailureDto>());

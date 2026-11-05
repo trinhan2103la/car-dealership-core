@@ -6,7 +6,7 @@ using Volo.Abp;
 namespace CarDealership.CoreService.EntityFrameworkCore.Identity;
 
 /// <summary>
-/// Ngày 16 (ADR-003): cấu hình EF Core cho module Identity CỦA DỰ ÁN (AdminSession,
+/// Cấu hình EF Core cho module Identity CỦA DỰ ÁN (AdminSession,
 /// LoginAttempt, Showroom_Scope...). Bảng tiền tố "idn_", tên bảng/cột snake_case ghi tường minh.
 /// Tên lớp có tiền tố "Project" để không nhầm với ConfigureIdentity() của ABP.
 /// </summary>
@@ -18,13 +18,15 @@ public static class ProjectIdentityDbContextModelCreatingExtensions
     {
         Check.NotNull(builder, nameof(builder));
 
-        // Ngày 30 (ADR-005): chỉ lưu SHA-256 của session id.
+        // Chỉ lưu SHA-256 của session id.
         builder.Entity<AdminSession>(b =>
         {
             b.ToTable(TablePrefix + "admin_sessions", t =>
             {
                 // Chỉ chấp nhận đúng 32 byte (SHA-256): chặn ghi nhầm giá trị gốc hay hash sai ở tầng DB.
                 t.HasCheckConstraint("ck_idn_admin_sessions_token_hash_len", "octet_length(token_hash) = 32");
+                t.HasCheckConstraint("ck_idn_admin_sessions_previous_token_hash_len",
+                    "previous_token_hash IS NULL OR octet_length(previous_token_hash) = 32");
             });
 
             b.HasKey(x => x.Id);
@@ -39,16 +41,25 @@ public static class ProjectIdentityDbContextModelCreatingExtensions
                 .HasConversion(v => v, v => v.ToUniversalTime());
             b.Property(x => x.RevokedAt).HasColumnName("revoked_at").HasColumnType("timestamp with time zone")
                 .HasConversion(v => v, v => v.HasValue ? v.Value.ToUniversalTime() : v);
+            // Refresh token rotation. Token vừa bị thay + thời điểm thay → nhận ra grace 20 s / dùng lại.
+            b.Property(x => x.PreviousTokenHash).HasColumnName("previous_token_hash").HasColumnType("bytea");
+            b.Property(x => x.RotatedAt).HasColumnName("rotated_at").HasColumnType("timestamp with time zone")
+                .HasConversion(v => v, v => v.HasValue ? v.Value.ToUniversalTime() : v);
+            b.Property(x => x.RevokeReason).HasColumnName("revoke_reason").HasMaxLength(AdminSession.MaxRevokeReasonLength);
             b.Ignore(x => x.IsRevoked);
+            b.Ignore(x => x.AbsoluteExpiresAt);
 
-            // Tra session mỗi request theo hash.
+            // Tra family theo refresh token hiện hành (mỗi lần refresh).
             b.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("ux_idn_admin_sessions_token_hash");
+            // Tra theo token vừa bị thay (grace / phát hiện dùng lại).
+            b.HasIndex(x => x.PreviousTokenHash).HasDatabaseName("ix_idn_admin_sessions_previous_token_hash")
+                .HasFilter("previous_token_hash IS NOT NULL");
             // Thu hồi mọi session còn hiệu lực của một user (vô hiệu hóa tài khoản).
             b.HasIndex(x => x.UserId).HasDatabaseName("ix_idn_admin_sessions_user_active")
                 .HasFilter("revoked_at IS NULL");
         });
 
-        // Ngày 31 (Req 14.1, 14.4): lịch sử đăng nhập để LoginAttemptPolicy phát lại. user_id không FK (khác module,
+        // Lịch sử đăng nhập để LoginAttemptPolicy phát lại. user_id không FK (khác module,
         // và null khi email không tồn tại).
         builder.Entity<LoginAttempt>(b =>
         {

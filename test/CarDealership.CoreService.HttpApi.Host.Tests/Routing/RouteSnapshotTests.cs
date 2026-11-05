@@ -12,12 +12,12 @@ using Xunit;
 namespace CarDealership.CoreService.Routing;
 
 /// <summary>
-/// Ngày 10 (Req 29.5, 28.12): khóa danh sách route khai báo tường minh.
+/// Khóa danh sách route khai báo tường minh.
 /// - So danh sách route hiện tại với RouteSnapshot.verified.txt.
 /// - Khi thêm route mới ở ngày sau, test sẽ ĐỎ cho tới khi cập nhật snapshot có chủ đích.
 /// Lưu ý: /health/live và /health/ready KHÔNG xuất hiện ở đây vì được đăng ký bằng
 /// app.UseHealthChecks(...) (middleware terminal), không phải endpoint routing.
-/// Ngày 22: đã xóa HomeController (chỉ redirect "/" sang "/swagger"), nên hiện KHÔNG có route nào;
+/// Đã xóa HomeController (chỉ redirect "/" sang "/swagger"), nên hiện KHÔNG có route nào;
 /// snapshot rỗng. Mọi controller ABP đã bị HideAbpModuleControllersConvention gỡ.
 /// Dòng bắt đầu bằng '#' trong RouteSnapshot.verified.txt là chú thích và bị bỏ qua.
 /// </summary>

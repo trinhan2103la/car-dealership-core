@@ -15,7 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 namespace CarDealership.CoreService.Auth;
 
 /// <summary>
-/// Ngày 37 (ADR-004, Req 15.3, 21, 28.12): Service_Credential = JWT ngắn hạn do BFF ký ES256; Core_API chỉ giữ
+/// Service_Credential = JWT ngắn hạn do BFF ký ES256; Core_API chỉ giữ
 /// KHÓA CÔNG KHAI nên không thể giả mạo token. Hằng số dùng chung cho cấu hình, policy và test.
 /// </summary>
 public static class ServiceCredential
@@ -26,6 +26,10 @@ public static class ServiceCredential
     public const string Audience = "core-api";
 
     public const string ScopeClaim = "scope";
+
+    /// <summary>Admin_User id (claim <c>sub</c>) và mã phiên (claim <c>sid</c>), khớp <c>AdminIdentityClaims</c>.</summary>
+    public const string SubjectClaim = "sub";
+    public const string SessionClaim = "sid";
     public const string BffScope = "bff";
     public const string JobsScope = "jobs";
 
@@ -34,7 +38,7 @@ public static class ServiceCredential
 
     public const string JobsRoutePrefix = "api/jobs";
 
-    /// <summary>Token sống tối đa 60 giây: <c>exp − iat</c> lớn hơn là bị từ chối dù chữ ký đúng (Req 15.3).</summary>
+    /// <summary>Token sống tối đa 60 giây: <c>exp − iat</c> lớn hơn là bị từ chối dù chữ ký đúng.</summary>
     public static readonly TimeSpan MaxLifetime = TimeSpan.FromSeconds(60);
 
     /// <summary>Lệch đồng hồ cho phép. Mặc định của JwtBearer là 5 phút, sẽ kéo token 60 giây sống tới 6 phút.</summary>
@@ -232,10 +236,24 @@ public static class ServiceCredentialSetup
         }
 
         // Nhiều giá trị scope trong một token sẽ qua được CẢ HAI policy (ServiceBff lẫn ServiceJobs) nên bị loại ngay ở bước
-        // xác thực (401). Thiếu scope hoặc scope lạ thì vẫn là token hợp lệ nhưng không đủ quyền: policy trả 403 (ADR-004).
+        // xác thực (401). Thiếu scope hoặc scope lạ thì vẫn là token hợp lệ nhưng không đủ quyền: policy trả 403.
         if (principal.FindAll(ServiceCredential.ScopeClaim).Count() > 1)
         {
             return "MultipleScopes";
+        }
+
+        // Danh tính Admin_User (sub + sid) do BFF lấy từ access token đã kiểm. Hoặc có đủ cả hai, mỗi loại đúng
+        // một giá trị GUID, hoặc không có cái nào (request không gắn user, ví dụ đăng nhập/refresh).
+        var subs = principal.FindAll(ServiceCredential.SubjectClaim).ToList();
+        var sids = principal.FindAll(ServiceCredential.SessionClaim).ToList();
+        if (subs.Count > 1 || sids.Count > 1 || subs.Count != sids.Count)
+        {
+            return "InvalidAdminIdentity";
+        }
+
+        if (subs.Count == 1 && (!Guid.TryParse(subs[0].Value, out _) || !Guid.TryParse(sids[0].Value, out _)))
+        {
+            return "InvalidAdminIdentity";
         }
 
         return null;
