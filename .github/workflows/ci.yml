@@ -1,6 +1,6 @@
 name: ci
 
-# Ngày 19 (ADR-011): CI riêng cho repo core-api. Chạy trên PR vào main và push lên main.
+# CI riêng cho repo core-api. Chạy trên PR vào main và push lên main.
 on:
     pull_request:
         branches: [main]
@@ -48,15 +48,15 @@ jobs:
               env:
                   SEED_SUPERADMIN_EMAIL: ci-superadmin@example.com
               run: |
-                  # Req 25.6: không có mật khẩu mặc định trong mã nguồn. Sinh ngẫu nhiên mỗi lần chạy, chỉ sống trong job.
-                  # Tiền tố Aa1! đảm bảo đủ hoa/thường/số/ký tự đặc biệt (luật Ngày 24); hex 32 ký tự đảm bảo độ dài.
+                  # Không có mật khẩu mặc định trong mã nguồn. Sinh ngẫu nhiên mỗi lần chạy, chỉ sống trong job.
+                  # Tiền tố Aa1! đảm bảo đủ hoa/thường/số/ký tự đặc biệt; hex 32 ký tự đảm bảo độ dài.
                   SEED_SUPERADMIN_PASSWORD="Aa1!$(openssl rand -hex 16)"
                   export SEED_SUPERADMIN_PASSWORD
                   dotnet run --project src/CarDealership.CoreService.DbMigrator -c Release --no-build
             - name: Test
               run: dotnet test CarDealership.CoreService.slnx -c Release --no-build --verbosity normal
 
-    # Ngày 20 (Req 29.1–29.3): không có package .Pro./Commercial, mọi Volo.* nằm trong allowlist.
+    # Không có package .Pro./Commercial, mọi Volo.* nằm trong allowlist.
     check-abp-packages:
         runs-on: ubuntu-latest
         steps:
@@ -72,7 +72,7 @@ jobs:
             - name: Check ABP package allowlist (solution thật)
               run: bash deploy/scripts/check-abp-packages.sh
 
-    # Ngày 20 (Req 21): chặn secret lộ và lỗ hổng NuGet mức High/Critical.
+    # Chặn secret lộ và lỗ hổng NuGet mức High/Critical.
     security:
         runs-on: ubuntu-latest
         permissions:
@@ -103,6 +103,22 @@ jobs:
                   fi
                   echo "Khong co lo hong NuGet muc High/Critical."
 
+    # openapi/openapi.json phải khớp DTO/endpoint thật. Đổi API mà quên xuất lại -> đỏ.
+    openapi-export:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: '10.0.x'
+            - name: Restore
+              run: dotnet restore CarDealership.CoreService.slnx && dotnet tool restore
+            - name: Build Host
+              run: dotnet build src/CarDealership.CoreService.HttpApi.Host -c Release --no-restore
+            - name: Export OpenAPI
+              run: bash deploy/scripts/export-openapi.sh
+            - name: openapi.json phải được commit và khớp mã nguồn
+              run: git diff --exit-code -- openapi/openapi.json
     commitlint:
         runs-on: ubuntu-latest
         steps:
