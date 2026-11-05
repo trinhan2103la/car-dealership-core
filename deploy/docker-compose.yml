@@ -2,7 +2,7 @@
 # Chạy TỪ repo car-dealership-core:  docker compose -f deploy/docker-compose.yml up -d
 # Quy ước: clone cả 3 repo sibling dưới cùng thư mục cha (D:\WorkSpace\FRT\PROJECT_PERSONAL\):
 #   car-dealership-core/  car-dealership-bff/  car-dealership-web/
-# Ngày 3: service `postgres`. Ngày 15: thêm `migrator` (chạy xong rồi thoát) và `core-api`.
+# Gồm `postgres`, `migrator` (chạy xong rồi thoát) và `core-api`.
 # Thứ tự khởi động: postgres (healthy) -> migrator (completed) -> core-api.
 
 name: car-dealership
@@ -33,7 +33,7 @@ services:
             timeout: 5s
             retries: 10
 
-    # Ngày 15: chạy migration + data seed rồi thoát (exit 0). core-api chờ service này completed.
+    # Chạy migration + data seed rồi thoát (exit 0). core-api chờ service này completed.
     migrator:
         image: cdp-migrator
         build:
@@ -47,13 +47,13 @@ services:
         environment:
             # Trong mạng compose, Postgres có hostname = tên service "postgres".
             ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
-            # Ngày 26 (Req 25.6–25.7): SuperAdmin ban đầu lấy từ biến môi trường, KHÔNG có mặc định trong mã nguồn.
+            # SuperAdmin ban đầu lấy từ biến môi trường, KHÔNG có mặc định trong mã nguồn.
             # Để trống thì migrator dừng với lỗi nêu tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
             SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL:-}
             SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD:-}
         restart: 'no'
 
-    # Ngày 15: Core_API. Host không tự migrate (Ngày 9) nên phải chờ migrator xong.
+    # Core_API. Host không tự migrate nên phải chờ migrator xong.
     core-api:
         image: cdp-core-api
         build:
@@ -69,12 +69,14 @@ services:
             ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
             # App:SelfUrl mặc định là https://localhost:44382 (dev); override cho container.
             App__SelfUrl: ${CORE_API_SELF_URL:-http://localhost:8080}
-            # Ngày 36 (Req 28.12, 16.12): khóa Edge, BẮT BUỘC (≥ 32 ký tự). Để trống thì core-api thoát mã khác 0 ngay khi
+            # Khóa Edge, BẮT BUỘC (≥ 32 ký tự). Để trống thì core-api thoát mã khác 0 ngay khi
             # khởi động và log tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
             EDGE_KEY: ${EDGE_KEY:-}
-            # Ngày 37 (ADR-004, Req 16.12): KHÓA CÔNG KHAI ES256 để kiểm JWT của BFF, BẮT BUỘC. Chỉ khóa công khai; khóa riêng
+            # KHÓA CÔNG KHAI ES256 để kiểm JWT của BFF, BẮT BUỘC. Chỉ khóa công khai; khóa riêng
             # (SERVICE_JWT_PRIVATE_KEY) chỉ ở BFF. Cấp nhầm khóa riêng thì core-api từ chối khởi động.
             SERVICE_JWT_PUBLIC_KEY: ${SERVICE_JWT_PUBLIC_KEY:-}
+            # Passphrase mã hóa của ABP (IStringEncryptionService), BẮT BUỘC (≥ 16 ký tự), chỉ từ biến môi trường.
+            STRING_ENCRYPTION_PASSPHRASE: ${STRING_ENCRYPTION_PASSPHRASE:-}
         ports:
             - '${CORE_API_PORT:-8080}:8080'
         restart: unless-stopped

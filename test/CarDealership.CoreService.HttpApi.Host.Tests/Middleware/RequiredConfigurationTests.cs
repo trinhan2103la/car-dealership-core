@@ -7,10 +7,16 @@ using Xunit;
 
 namespace CarDealership.CoreService.Middleware.Tests;
 
-/// <summary>Ngày 36 (Req 16.12): khởi động thiếu/sai biến bắt buộc thì dừng và chỉ nêu TÊN biến.</summary>
+/// <summary>Khởi động thiếu/sai biến bắt buộc thì dừng và chỉ nêu TÊN biến.</summary>
 public class RequiredConfigurationTests
 {
-    private static IConfiguration Config(string? edgeKey, string? publicKey = null, bool useValidPublicKey = true)
+    private const string ValidPassphrase = "passphrase-16byte";
+
+    private static IConfiguration Config(
+        string? edgeKey,
+        string? publicKey = null,
+        bool useValidPublicKey = true,
+        string? passphrase = ValidPassphrase)
     {
         var values = new Dictionary<string, string?>();
         if (edgeKey is not null)
@@ -18,7 +24,7 @@ public class RequiredConfigurationTests
             values[EdgeKeyOptions.VariableName] = edgeKey;
         }
 
-        // Ngày 37: khóa công khai ES256 cũng là biến bắt buộc. Mặc định cấp khóa hợp lệ để các ca Edge key không bị lẫn.
+        // Khóa công khai ES256 cũng là biến bắt buộc. Mặc định cấp khóa hợp lệ để các ca Edge key không bị lẫn.
         if (publicKey is not null)
         {
             values[Auth.ServiceCredential.PublicKeyVariable] = publicKey;
@@ -26,6 +32,12 @@ public class RequiredConfigurationTests
         else if (useValidPublicKey)
         {
             values[Auth.ServiceCredential.PublicKeyVariable] = TestServiceJwt.PublicKeyPem;
+        }
+
+        // Passphrase mã hóa cũng bắt buộc; mặc định cấp giá trị hợp lệ để không lẫn với các ca khác.
+        if (passphrase is not null)
+        {
+            values[StringEncryptionOptions.VariableName] = passphrase;
         }
 
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
@@ -80,7 +92,7 @@ public class RequiredConfigurationTests
         ex.Message.Split(':').Last().ShouldNotContain("=");
     }
 
-    // ---------- Ngày 37: SERVICE_JWT_PUBLIC_KEY ----------
+    // ---------- SERVICE_JWT_PUBLIC_KEY ----------
 
     [Fact]
     public void Missing_public_key_names_the_variable()
@@ -126,6 +138,39 @@ public class RequiredConfigurationTests
 
             problems.ShouldHaveSingleItem().ShouldStartWith("SERVICE_JWT_PUBLIC_KEY");
         }
+    }
+
+    // ---------- STRING_ENCRYPTION_PASSPHRASE ----------
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("short")]
+    public void Missing_blank_or_short_passphrase_names_the_variable_without_echoing_it(string? value)
+    {
+        var problems = RequiredConfiguration.Find(Config(new string('k', 32), passphrase: value));
+
+        problems.ShouldHaveSingleItem().ShouldStartWith("STRING_ENCRYPTION_PASSPHRASE");
+        if (!string.IsNullOrEmpty(value))
+        {
+            Should.Throw<System.InvalidOperationException>(() =>
+                RequiredConfiguration.EnsureValid(Config(new string('k', 32), passphrase: value)))
+                .Message.ShouldNotContain(value);
+        }
+    }
+
+    [Fact]
+    public void Passphrase_from_the_config_path_is_also_accepted()
+    {
+        // ABP đọc StringEncryption:DefaultPassPhrase; chấp nhận cả đường này cho tương thích ngược.
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            [EdgeKeyOptions.VariableName] = new string('k', 32),
+            [Auth.ServiceCredential.PublicKeyVariable] = TestServiceJwt.PublicKeyPem,
+            [StringEncryptionOptions.ConfigPath] = ValidPassphrase,
+        }).Build();
+
+        RequiredConfiguration.Find(config).ShouldBeEmpty();
     }
 
     [Fact]
