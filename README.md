@@ -1,6 +1,38 @@
 ﻿# car-dealership-core
 
-Core API (ABP Framework 10.7 / .NET 10) của dự án **Car Dealership Platform** — tầng duy nhất thực thi quy tắc nghiệp vụ, truy cập PostgreSQL qua EF Core. Repo này cũng chứa Docker Compose xuyên service để chạy toàn hệ local.
+Core API (ABP Framework 10.7 / .NET 10) của dự án **Car Dealership Platform** — tầng duy nhất thực thi quy tắc nghiệp vụ, truy cập PostgreSQL qua EF Core. Repo này cũng chứa Docker Compose (PostgreSQL, DbMigrator, Core_API) để chạy local.
+
+## Demo
+
+| Thành phần   | URL                                        | Nền tảng (free, Singapore) |
+| ------------ | ------------------------------------------ | -------------------------- |
+| Admin_Portal | https://car-dealership-web-pink.vercel.app | Vercel Hobby               |
+| BFF          | https://car-dealership-bff.onrender.com    | Render free                |
+| Core_API     | https://car-dealership-core.onrender.com   | Render free + Supabase     |
+
+- Chỉ Admin_Portal dùng được bằng trình duyệt. Core_API trả 404 cho mọi request không đi qua BFF; chỉ `/health/live` mở công khai.
+- Render free ngủ sau 15 phút không có request: lần đầu mở có thể chậm 30–60 giây. Nếu đăng nhập báo "Dịch vụ phản hồi quá chậm", chờ rồi thử lại.
+- Tài khoản demo không công khai.
+
+## Trạng thái (mốc M1, 2026-11-06)
+
+**Đã xong (P0–P1):**
+
+- 3 repo, CI mỗi repo (build, test, gitleaks, audit dependency, allowlist package ABP, OpenAPI, commitlint), branch protection.
+- ABP layered không UI, đã cắt OpenIddict/Account/multi-tenancy; route khai báo tường minh, Swagger chỉ ở Development.
+- Serilog JSON, `Correlation_Id` xuyên BFF và Core, health `/health/live` và `/health/ready`.
+- Identity: chính sách mật khẩu, khóa theo email sau 5 lần sai, 4 role × 9 permission (Req 15.4) seed bằng DbMigrator, SuperAdmin lấy từ biến môi trường.
+- Đăng nhập admin bằng access token (10 phút) + refresh token xoay vòng trong cookie HttpOnly (ADR-012).
+- Bảo mật BFF → Core: `X-Edge-Key` + JWT dịch vụ ES256 60 giây theo scope `bff`/`jobs` (Req 28.12).
+- Admin SPA tối giản (đăng nhập/đăng xuất) trên demo; nghiệm thu P1 7/7.
+
+**Chưa xong:**
+
+- P2 Catalog (hãng, mẫu xe, phiên bản, thông số, ảnh, tìm kiếm, xuất bản, audit).
+- P3 Showroom và cấu hình website.
+- P4 Public website (Next.js), SEO, sitemap, revalidation.
+- P5 Admin portal đầy đủ; P6 Lead và lái thử; P7 Analytics; P8 backup/restore, rollback drill, hardening.
+- Không có smoke test hay monitor tự động sau deploy; kiểm tra thủ công.
 
 ## Hệ 3 repo
 
@@ -13,7 +45,7 @@ D:\WorkSpace\FRT\PROJECT_PERSONAL\
 └─ car-dealership-core\    # ABP / .NET 10 (repo này) + deploy/docker-compose.yml
 ```
 
-Docker Compose dùng build context tương đối tới `../car-dealership-bff` và `../car-dealership-web`, nên bắt buộc ba repo phải sibling.
+Hiện Docker Compose chỉ build Core_API và DbMigrator từ repo này; BFF và frontend chạy bằng `pnpm` trong repo của chúng.
 
 ## Chạy local
 
@@ -111,7 +143,7 @@ Endpoint dưới `/api/jobs/*` tự động dùng policy `ServiceJobs` (conventi
 | POST   | `/api/app/auth/sessions`         | Đăng nhập `{email, password}` → 200 `{refreshToken, sessionId, ...}`; mọi thất bại → 401 cùng một body |
 | POST   | `/api/app/auth/sessions/refresh` | Đổi refresh token lấy token mới (xoay vòng); dùng lại token cũ → thu hồi cả phiên                      |
 | POST   | `/api/app/auth/sessions/revoke`  | Đăng xuất: thu hồi phiên của refresh token, 204                                                        |
-| GET    | `/api/app/auth/sessions/current` | Danh tính + quyền của phiên trong claim `sub`/`sid` của service JWT                                     |
+| GET    | `/api/app/auth/sessions/current` | Danh tính + quyền của phiên trong claim `sub`/`sid` của service JWT                                    |
 
 Sai 5 lần liên tiếp trong 15 phút thì email đó bị khóa 15 phút (kể cả khi đúng mật khẩu). Phiên hết hạn sau 3 ngày không dùng, tối đa 7 ngày kể từ lúc đăng nhập, hoặc khi user bị Inactive.
 
