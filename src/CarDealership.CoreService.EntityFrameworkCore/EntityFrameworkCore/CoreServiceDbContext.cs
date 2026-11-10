@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.Data;
@@ -8,6 +11,11 @@ using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
+using CarDealership.CoreService.Audit;
+using CarDealership.CoreService.Catalog;
+using CarDealership.CoreService.Catalog.Brands;
+using CarDealership.CoreService.Catalog.CarModels;
+using CarDealership.CoreService.Catalog.Slugs;
 using CarDealership.CoreService.EntityFrameworkCore.Catalog;
 using CarDealership.CoreService.EntityFrameworkCore.Showrooms;
 using CarDealership.CoreService.EntityFrameworkCore.Leads;
@@ -51,12 +59,37 @@ public class CoreServiceDbContext :
     public DbSet<AdminSession> AdminSessions { get; set; }
     public DbSet<LoginAttempt> LoginAttempts { get; set; }
 
+    //Module Audit của dự án (aud_*, append-only)
+    public DbSet<AuditEntry> AuditEntries { get; set; }
+
+    //Module Catalog (cat_*). CarVariant và VehicleImage cố ý KHÔNG có DbSet: chúng là entity con, chỉ truy cập qua CarModel.
+    public DbSet<Brand> Brands { get; set; }
+    public DbSet<CarModel> CarModels { get; set; }
+    public DbSet<SlugHistory> SlugHistories { get; set; }
+
     #endregion
 
     public CoreServiceDbContext(DbContextOptions<CoreServiceDbContext> options)
         : base(options)
     {
 
+    }
+
+    /// <summary>
+    /// Dịch vi phạm UNIQUE của Catalog (tên/Slug trùng, kể cả đồng thời) sang lỗi 409 theo trường.
+    /// Lệch ConcurrencyStamp đã được ABP đổi thành <c>AbpDbConcurrencyException</c> trong <c>base</c> (cũng là 409).
+    /// </summary>
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException pg
+                                           && CatalogUniqueViolations.TryTranslate(pg) is not null)
+        {
+            throw CatalogUniqueViolations.TryTranslate(pg)!;
+        }
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
