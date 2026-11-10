@@ -157,6 +157,8 @@ public class CoreServiceHttpApiHostModule : AbpModule
         app.UseCors();
         // Xác thực JWT dịch vụ (bật lại; trước đó để chờ JWT ES256). Đứng sau Edge key, trước authorization.
         app.UseAuthentication();
+        // JWT có sub/sid: tra phiên + gắn user id và Role của ABP (ICurrentUser, [Authorize(permission)]). Phiên hỏng -> 401.
+        app.UseMiddleware<CarDealership.CoreService.Middleware.AdminPrincipalMiddleware>();
 
         if (MultiTenancyConsts.IsEnabled)
         {
