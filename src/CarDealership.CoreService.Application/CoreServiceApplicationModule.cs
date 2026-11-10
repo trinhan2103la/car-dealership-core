@@ -19,5 +19,9 @@ public class CoreServiceApplicationModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddMapperlyObjectMapper<CoreServiceApplicationModule>();
+
+        // Object_Storage cho ảnh xe: đọc mục "ObjectStorage" (biến môi trường ObjectStorage__*). Thiếu cấu hình chỉ lỗi khi dùng.
+        Configure<CarDealership.CoreService.Catalog.Images.ImageStorageOptions>(
+            context.Services.GetConfiguration().GetSection(CarDealership.CoreService.Catalog.Images.ImageStorageOptions.Section));
     }
 }
