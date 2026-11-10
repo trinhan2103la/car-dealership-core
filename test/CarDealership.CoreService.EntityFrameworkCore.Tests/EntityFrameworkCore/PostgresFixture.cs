@@ -36,12 +36,46 @@ public class PostgresFixture : IAsyncLifetime
         // Giống CoreServiceEntityFrameworkCoreModule; đặt sớm vì migration chạy trước khi ABP khởi động.
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+        // Giống môi trường thật: migration chạy bằng role chủ (superuser của container), còn ứng dụng dùng
+        // role riêng. Role phải có TRƯỚC khi migrate vì migration AddAuditEntries REVOKE trên role này.
+        await CreateAppRoleAsync();
+        Environment.SetEnvironmentVariable("DB_APP_ROLE", AppRole);
+
         var options = new DbContextOptionsBuilder<CoreServiceDbContext>()
             .UseNpgsql(_connectionString)
             .Options;
 
         await using var dbContext = new CoreServiceDbContext(options);
         await dbContext.Database.MigrateAsync();
+    }
+
+    /// <summary>Role DB mà "ứng dụng" dùng trong test (khác role migrator).</summary>
+    public const string AppRole = "cdp_app_test";
+
+    /// <summary>Mật khẩu chỉ dùng cho container test tạm, không phải bí mật.</summary>
+    private const string AppRolePassword = "app_role_test_pw";
+
+    /// <summary>Chuỗi kết nối tới cùng database nhưng bằng role ứng dụng (không phải owner).</summary>
+    public static string AppConnectionString => new NpgsqlConnectionStringBuilder(ConnectionString)
+    {
+        Username = AppRole,
+        Password = AppRolePassword,
+        Pooling = false,
+    }.ConnectionString;
+
+    private async Task CreateAppRoleAsync()
+    {
+        await using var connection = new NpgsqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // Mô phỏng init-app-role.sh của deploy: role có DML mặc định trên bảng do role migrator tạo sau này.
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            CREATE ROLE {AppRole} LOGIN PASSWORD '{AppRolePassword}';
+            GRANT USAGE ON SCHEMA public TO {AppRole};
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE ON TABLES TO {AppRole};
+            """;
+        await command.ExecuteNonQueryAsync();
     }
 
     public async Task DisposeAsync()
