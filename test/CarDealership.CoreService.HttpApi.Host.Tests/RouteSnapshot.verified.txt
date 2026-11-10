@@ -6,8 +6,24 @@
 # /health/ready giờ là ENDPOINT (MapHealthChecks) để chịu fallback policy ServiceBff (cần Edge key + JWT).
 # /health/live vẫn là middleware (app.UseHealthChecks) nên không nằm ở đây: được miễn Edge key và JWT.
 # Thêm controller mới => test đỏ cho tới khi route xuất hiện ở file này (cập nhật có chủ đích).
+# P2 Catalog (Ngày 61-84): Brand, CarModel, CarVariant (lồng dưới CarModel), transitions, publish-check, public.
 /api/app/auth/sessions
 /api/app/auth/sessions/current
 /api/app/auth/sessions/refresh
 /api/app/auth/sessions/revoke
+/api/catalog/brands
+/api/catalog/brands/{id:guid}
+/api/catalog/brands/{id:guid}/status
+/api/catalog/car-models
+/api/catalog/car-models/{carModelId:guid}/variants
+/api/catalog/car-models/{carModelId:guid}/variants/{variantId:guid}
+/api/catalog/car-models/{carModelId:guid}/variants/{variantId:guid}/transitions
+/api/catalog/car-models/{id:guid}
+/api/catalog/car-models/{id:guid}/publish-check
+/api/catalog/car-models/{id:guid}/transitions
+/api/catalog/public/brands
+/api/catalog/public/car-models
+/api/catalog/public/car-models/by-slug
+/api/catalog/public/home-cars
+/api/catalog/public/sitemap
 /health/ready

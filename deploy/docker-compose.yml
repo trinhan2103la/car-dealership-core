@@ -16,6 +16,9 @@ services:
             POSTGRES_USER: ${POSTGRES_USER:-cdp}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cdp_dev_pw}
             POSTGRES_DB: ${POSTGRES_DB:-cdp}
+            # Role DB riêng cho core-api (KHÁC POSTGRES_USER là role migrator/owner bảng).
+            DB_APP_USER: ${DB_APP_USER:-cdp_app}
+            DB_APP_PASSWORD: ${DB_APP_PASSWORD:-cdp_app_dev_pw}
         ports:
             # Chỉ mở cho máy này (127.0.0.1): mật khẩu dev yếu, không để máy khác trong mạng kết nối được.
             - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
@@ -23,6 +26,8 @@ services:
             # Postgres 18 đổi quy ước: mount ở /var/lib/postgresql (không phải .../data).
             # Dữ liệu sẽ nằm trong subdir theo major version bên trong volume này.
             - pgdata:/var/lib/postgresql
+            # Tạo role DB riêng cho ứng dụng (chỉ chạy khi volume còn trống).
+            - ./postgres/init-app-role.sh:/docker-entrypoint-initdb.d/10-init-app-role.sh:ro
         healthcheck:
             test:
                 [
@@ -47,11 +52,25 @@ services:
         environment:
             # Trong mạng compose, Postgres có hostname = tên service "postgres".
             ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
+            # Migration AddAuditEntries thu UPDATE/DELETE/TRUNCATE của role này trên aud_entries (append-only).
+            DB_APP_ROLE: ${DB_APP_USER:-cdp_app}
             # SuperAdmin ban đầu lấy từ biến môi trường, KHÔNG có mặc định trong mã nguồn.
             # Để trống thì migrator dừng với lỗi nêu tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
             SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL:-}
             SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD:-}
         restart: 'no'
+
+    # Object_Storage local (API S3) cho ảnh xe. Demo dùng Supabase Storage (cũng API S3).
+    # Không dùng MinIO như kế hoạch ban đầu: image minio/minio không còn phát hành trên Docker Hub (kiểm 2026-11-09).
+    # S3Mock không kiểm chữ ký nên khóa truy cập local chỉ là chuỗi giả; dữ liệu mất khi xóa container.
+    object-storage:
+        image: adobe/s3mock:5.2.3
+        container_name: cdp-object-storage
+        environment:
+            COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: vehicle-images
+        ports:
+            - '127.0.0.1:${OBJECT_STORAGE_PORT:-9090}:9090'
+        restart: unless-stopped
 
     # Core_API. Host không tự migrate nên phải chờ migrator xong.
     core-api:
@@ -66,7 +85,8 @@ services:
         environment:
             ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
             ASPNETCORE_URLS: http://+:8080
-            ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
+            # core-api chạy bằng role ứng dụng (không phải owner bảng) để REVOKE trên aud_entries có hiệu lực.
+            ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${DB_APP_USER:-cdp_app};Password=${DB_APP_PASSWORD:-cdp_app_dev_pw};'
             # App:SelfUrl mặc định là https://localhost:44382 (dev); override cho container.
             App__SelfUrl: ${CORE_API_SELF_URL:-http://localhost:8080}
             # Khóa Edge, BẮT BUỘC (≥ 32 ký tự). Để trống thì core-api thoát mã khác 0 ngay khi
@@ -77,6 +97,11 @@ services:
             SERVICE_JWT_PUBLIC_KEY: ${SERVICE_JWT_PUBLIC_KEY:-}
             # Passphrase mã hóa của ABP (IStringEncryptionService), BẮT BUỘC (≥ 16 ký tự), chỉ từ biến môi trường.
             STRING_ENCRYPTION_PASSPHRASE: ${STRING_ENCRYPTION_PASSPHRASE:-}
+            # Object_Storage (API S3). Local trỏ vào S3Mock trong mạng compose; demo đặt endpoint + khóa của Supabase Storage.
+            ObjectStorage__ServiceUrl: ${OBJECT_STORAGE_URL:-http://object-storage:9090}
+            ObjectStorage__Bucket: ${OBJECT_STORAGE_BUCKET:-vehicle-images}
+            ObjectStorage__AccessKey: ${OBJECT_STORAGE_ACCESS_KEY:-local-dev}
+            ObjectStorage__SecretKey: ${OBJECT_STORAGE_SECRET_KEY:-local-dev}
         ports:
             - '${CORE_API_PORT:-8080}:8080'
         restart: unless-stopped

@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using CarDealership.CoreService.Audit;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.SecurityLog;
 
@@ -36,15 +37,17 @@ public class SecurityEventWriter : ISecurityEventWriter, ITransientDependency
 {
     private const string InvalidEmailPlaceholder = "(invalid-email)";
     private readonly ISecurityLogManager _securityLogManager;
+    private readonly IAuditTrail _auditTrail;
 
-    public SecurityEventWriter(ISecurityLogManager securityLogManager)
+    public SecurityEventWriter(ISecurityLogManager securityLogManager, IAuditTrail auditTrail)
     {
         _securityLogManager = securityLogManager;
+        _auditTrail = auditTrail;
     }
 
-    public Task WriteAsync(string action, string? email, Guid? userId, string? reason)
+    public async Task WriteAsync(string action, string? email, Guid? userId, string? reason)
     {
-        return _securityLogManager.SaveAsync(log =>
+        await _securityLogManager.SaveAsync(log =>
         {
             log.Identity = "CarDealership.Admin";
             log.Action = action;
@@ -57,6 +60,10 @@ public class SecurityEventWriter : ISecurityEventWriter, ITransientDependency
 
             // KHÔNG bao giờ đưa mật khẩu, session id hay hash vào đây.
         });
+
+        // Audit_Log (Req 17.10): UoW riêng, commit ngay. Chỉ ghi mã hành động, user id và lý do (không email, không
+        // mật khẩu). ABP security log ở trên vẫn giữ tên đăng nhập đã nhập để truy vết.
+        await _auditTrail.WriteSecurityEventAsync(action, userId, reason);
     }
 
     /// <summary>

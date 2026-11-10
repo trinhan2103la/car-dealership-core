@@ -24,6 +24,433 @@ namespace CarDealership.CoreService.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("CarDealership.CoreService.Audit.AuditEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("text")
+                        .HasColumnName("action");
+
+                    b.Property<Guid?>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<string>("Changes")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("changes");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("text")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("text")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("text")
+                        .HasColumnName("entity_type");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt")
+                        .IsDescending()
+                        .HasDatabaseName("ix_aud_entries_occurred_at");
+
+                    b.HasIndex("ActorId", "OccurredAt")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_aud_entries_actor_occurred_at");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("ix_aud_entries_entity");
+
+                    b.ToTable("aud_entries", (string)null);
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.Brands.Brand", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creation_time");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creator_id");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("extra_properties");
+
+                    b.Property<bool>("IsDemo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_demo");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modification_time");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("last_modifier_id");
+
+                    b.Property<string>("LogoKey")
+                        .HasColumnType("text")
+                        .HasColumnName("logo_key");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cat_brands_slug");
+
+                    b.ToTable("cat_brands", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cat_brands_display_order", "display_order BETWEEN 0 AND 9999");
+
+                            t.HasCheckConstraint("ck_cat_brands_slug", "slug ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$' AND length(slug) <= 100");
+                        });
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.CarModel", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("BrandId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("brand_id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("creation_time");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("creator_id");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("display_order");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("extra_properties");
+
+                    b.Property<bool>("IsDemo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_demo");
+
+                    b.Property<bool>("IsFeatured")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_featured");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modification_time");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("last_modifier_id");
+
+                    b.Property<long?>("MaxPublishedPrice")
+                        .HasColumnType("bigint")
+                        .HasColumnName("max_published_price");
+
+                    b.Property<long?>("MinPublishedPrice")
+                        .HasColumnType("bigint")
+                        .HasColumnName("min_published_price");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("search_text");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BrandId", "Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cat_car_models_brand_slug");
+
+                    b.HasIndex("MinPublishedPrice", "Slug")
+                        .HasDatabaseName("ix_cat_car_models_min_price");
+
+                    b.HasIndex("Status", "PublishedAt", "Slug")
+                        .IsDescending(false, true, false)
+                        .HasDatabaseName("ix_cat_car_models_published")
+                        .HasFilter("status = 'Published'");
+
+                    b.ToTable("cat_car_models", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cat_car_models_display_order", "display_order BETWEEN 0 AND 9999");
+
+                            t.HasCheckConstraint("ck_cat_car_models_slug", "slug ~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$' AND length(slug) <= 100");
+
+                            t.HasCheckConstraint("ck_cat_car_models_status", "status IN ('Draft', 'Published', 'Hidden', 'Archived')");
+                        });
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.CarVariant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BodyType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("body_type");
+
+                    b.Property<Guid>("CarModelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("car_model_id");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<bool>("ContactForPrice")
+                        .HasColumnType("boolean")
+                        .HasColumnName("contact_for_price");
+
+                    b.Property<string>("Engine")
+                        .HasColumnType("text")
+                        .HasColumnName("engine");
+
+                    b.Property<string>("ExtraSpecs")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("extra_specs");
+
+                    b.Property<string>("Fuel")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("fuel");
+
+                    b.Property<bool>("IsDemo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_demo");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Power")
+                        .HasColumnType("text")
+                        .HasColumnName("power");
+
+                    b.Property<long?>("ReferencePrice")
+                        .HasColumnType("bigint")
+                        .HasColumnName("reference_price");
+
+                    b.Property<short>("Seats")
+                        .HasColumnType("smallint")
+                        .HasColumnName("seats");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Transmission")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("transmission");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarModelId", "Status")
+                        .HasDatabaseName("ix_cat_car_variants_model_status");
+
+                    b.ToTable("cat_car_variants", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_cat_car_variants_price", "(contact_for_price AND reference_price IS NULL) OR (NOT contact_for_price AND reference_price BETWEEN 1 AND 100000000000)");
+
+                            t.HasCheckConstraint("ck_cat_car_variants_seats", "seats BETWEEN 2 AND 16");
+
+                            t.HasCheckConstraint("ck_cat_car_variants_status", "status IN ('Draft', 'Published', 'Hidden', 'Archived')");
+                        });
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.VehicleImage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Alt")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("alt");
+
+                    b.Property<Guid>("CarModelId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("car_model_id");
+
+                    b.Property<Guid?>("CarVariantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("car_variant_id");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<bool>("IsCover")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_cover");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("storage_key");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarModelId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cat_vehicle_images_cover")
+                        .HasFilter("is_cover");
+
+                    b.HasIndex("CarVariantId");
+
+                    b.HasIndex("CarModelId", "DisplayOrder")
+                        .HasDatabaseName("ix_cat_vehicle_images_model_order");
+
+                    b.ToTable("cat_vehicle_images", (string)null);
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.Slugs.SlugHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("OldSlug")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("old_slug");
+
+                    b.Property<Guid>("ScopeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scope_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("ix_cat_slug_history_entity");
+
+                    b.HasIndex("EntityType", "ScopeId", "OldSlug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_cat_slug_history_old_slug");
+
+                    b.ToTable("cat_slug_history", (string)null);
+                });
+
             modelBuilder.Entity("CarDealership.CoreService.Identity.Login.LoginAttempt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1489,6 +1916,38 @@ namespace CarDealership.CoreService.Migrations
                     b.ToTable("AbpSettingDefinitions", (string)null);
                 });
 
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.CarModel", b =>
+                {
+                    b.HasOne("CarDealership.CoreService.Catalog.Brands.Brand", null)
+                        .WithMany()
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.CarVariant", b =>
+                {
+                    b.HasOne("CarDealership.CoreService.Catalog.CarModels.CarModel", null)
+                        .WithMany("Variants")
+                        .HasForeignKey("CarModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.VehicleImage", b =>
+                {
+                    b.HasOne("CarDealership.CoreService.Catalog.CarModels.CarModel", null)
+                        .WithMany("Images")
+                        .HasForeignKey("CarModelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CarDealership.CoreService.Catalog.CarModels.CarVariant", null)
+                        .WithMany()
+                        .HasForeignKey("CarVariantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -1658,6 +2117,13 @@ namespace CarDealership.CoreService.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CarDealership.CoreService.Catalog.CarModels.CarModel", b =>
+                {
+                    b.Navigation("Images");
+
+                    b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>
