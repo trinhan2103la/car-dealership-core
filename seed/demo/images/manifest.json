@@ -1,74 +1,110 @@
 [
   {
     "file": "honda-city-front",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2022_Honda_City_ZX_i-VTEC_(India)_front_view.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Dairokkan9",
+    "title": "2022 Honda City ZX i-VTEC (India) front view.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "honda-city-side",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2024_Honda_City_1.5_RS_in_Platinum_White_Pearl,_front_left.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Ethan Llamas",
+    "title": "2024 Honda City 1.5 RS in Platinum White Pearl, front left.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "honda-cr-v-front",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2022_Dongfeng-Honda_CR-V_(front).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "User3204",
+    "title": "2022 Dongfeng-Honda CR-V (front).jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "honda-cr-v-side",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Honda_CR-V_front_end.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "deathpallie325",
+    "title": "2023 Honda CR-V front end.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "hyundai-accent-front",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2018_Hyundai_Accent_front_7.29.18.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Kevauto",
+    "title": "2018 Hyundai Accent front 7.29.18.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "hyundai-accent-side",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2014-2017_Hyundai_Solaris_Sedan_(front).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Self-Proclaimed-Car-Enthusiast",
+    "title": "2014-2017 Hyundai Solaris Sedan (front).jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "hyundai-tucson-front",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:Hyundai_Tucson_(NX4,_SWB)_PHEV_1X7A1858.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Alexander-93",
+    "title": "Hyundai Tucson (NX4, SWB) PHEV 1X7A1858.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "hyundai-tucson-side",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2022_Hyundai_Tucson_SEL,_front_5.2.22.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Kevauto",
+    "title": "2022 Hyundai Tucson SEL, front 5.2.22.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "toyota-corolla-cross-front",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2022_FAW-Toyota_Corolla_Cross_(front).jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "User3204",
+    "title": "2022 FAW-Toyota Corolla Cross (front).jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "toyota-corolla-cross-side",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Toyota_Corolla_Cross_XLE_4WD_in_Wind_Chill_Pearl,_front_left.jpg",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "author": "Mr.choppers",
+    "title": "2023 Toyota Corolla Cross XLE 4WD in Wind Chill Pearl, front left.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "toyota-vios-front",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2024_Toyota_Vios_1.3_XLE_in_Super_Red_V,_front_right.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Ethan Llamas",
+    "title": "2024 Toyota Vios 1.3 XLE in Super Red V, front right.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   },
   {
     "file": "toyota-vios-side",
-    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
-    "license": "CC0-1.0",
-    "author": "car-dealership-platform"
+    "source": "https://commons.wikimedia.org/wiki/File:2023_Toyota_Vios_1.5_G_in_Black,_front_left.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "Ethan Llamas",
+    "title": "2023 Toyota Vios 1.5 G in Black, front left.jpg",
+    "note": "Ảnh thu nhỏ 1920 px của Wikimedia Commons, đã xử lý lại (bỏ EXIF, WebP 3 kích thước). Ảnh tạm cho demo."
   }
 ]
