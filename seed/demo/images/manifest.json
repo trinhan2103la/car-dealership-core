@@ -1,0 +1,74 @@
+[
+  {
+    "file": "honda-city-front",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "honda-city-side",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "honda-cr-v-front",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "honda-cr-v-side",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "hyundai-accent-front",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "hyundai-accent-side",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "hyundai-tucson-front",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "hyundai-tucson-side",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "toyota-corolla-cross-front",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "toyota-corolla-cross-side",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "toyota-vios-front",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  },
+  {
+    "file": "toyota-vios-side",
+    "source": "Ảnh minh họa tự tạo bởi car-dealership-bff/scripts/prepare-seed-images.mjs",
+    "license": "CC0-1.0",
+    "author": "car-dealership-platform"
+  }
+]

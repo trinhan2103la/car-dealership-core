@@ -49,6 +49,8 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+            object-storage:
+                condition: service_started
         environment:
             # Trong mạng compose, Postgres có hostname = tên service "postgres".
             ConnectionStrings__Default: 'Host=postgres;Port=5432;Database=${POSTGRES_DB:-cdp};User ID=${POSTGRES_USER:-cdp};Password=${POSTGRES_PASSWORD:-cdp_dev_pw};'
@@ -58,6 +60,12 @@ services:
             # Để trống thì migrator dừng với lỗi nêu tên biến thiếu (không in giá trị). Đặt trong deploy/.env.
             SEED_SUPERADMIN_EMAIL: ${SEED_SUPERADMIN_EMAIL:-}
             SEED_SUPERADMIN_PASSWORD: ${SEED_SUPERADMIN_PASSWORD:-}
+            # Seed Demo_Data catalog: dev|demo tạo dữ liệu, prod bỏ qua. Ảnh upload qua Object_Storage bên dưới.
+            SEED_ENVIRONMENT: ${SEED_ENVIRONMENT:-dev}
+            ObjectStorage__ServiceUrl: ${OBJECT_STORAGE_URL:-http://object-storage:9090}
+            ObjectStorage__Bucket: ${OBJECT_STORAGE_BUCKET:-vehicle-images}
+            ObjectStorage__AccessKey: ${OBJECT_STORAGE_ACCESS_KEY:-local-dev}
+            ObjectStorage__SecretKey: ${OBJECT_STORAGE_SECRET_KEY:-local-dev}
         restart: 'no'
 
     # Object_Storage local (API S3) cho ảnh xe. Demo dùng Supabase Storage (cũng API S3).

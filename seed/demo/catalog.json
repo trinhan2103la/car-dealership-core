@@ -1,0 +1,116 @@
+{
+  // Demo_Data catalog (Ngày 92). Giá và thông số là số MINH HỌA cho demo, không phải báo giá.
+  // Ảnh: mỗi mục "file" có 3 biến thể images/{file}-{sm|md|lg}.webp và một mục trong images/manifest.json.
+  "brands": [
+    {
+      "name": "Toyota",
+      "slug": "toyota",
+      "displayOrder": 1,
+      "carModels": [
+        {
+          "name": "Vios",
+          "slug": "vios",
+          "description": "Sedan hạng B bền bỉ, tiết kiệm nhiên liệu, khoang cabin rộng rãi, phù hợp gia đình nhỏ và chạy dịch vụ trong đô thị.",
+          "isFeatured": true,
+          "displayOrder": 1,
+          "variants": [
+            { "name": "1.5E MT", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số sàn", "seats": 5, "engine": "1.5L", "power": "106 hp", "referencePrice": 458000000 },
+            { "name": "1.5G CVT", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "106 hp", "referencePrice": 545000000 }
+          ],
+          "images": [
+            { "file": "toyota-vios-front", "alt": "Toyota Vios nhìn từ phía trước", "cover": true },
+            { "file": "toyota-vios-side", "alt": "Toyota Vios nhìn từ bên hông" }
+          ]
+        },
+        {
+          "name": "Corolla Cross",
+          "slug": "corolla-cross",
+          "description": "SUV đô thị cỡ B+ gầm cao, có tùy chọn động cơ hybrid, nhiều tính năng an toàn chủ động cho gia đình.",
+          "isFeatured": true,
+          "displayOrder": 2,
+          "variants": [
+            { "name": "1.8V", "bodyType": "SUV", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.8L", "power": "138 hp", "referencePrice": 820000000 },
+            { "name": "1.8HEV", "bodyType": "SUV", "fuel": "Hybrid", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.8L Hybrid", "power": "121 hp", "contactForPrice": true }
+          ],
+          "images": [
+            { "file": "toyota-corolla-cross-front", "alt": "Toyota Corolla Cross nhìn từ phía trước", "cover": true },
+            { "file": "toyota-corolla-cross-side", "alt": "Toyota Corolla Cross nhìn từ bên hông" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Honda",
+      "slug": "honda",
+      "displayOrder": 2,
+      "carModels": [
+        {
+          "name": "City",
+          "slug": "city",
+          "description": "Sedan hạng B thiết kế thể thao, vận hành linh hoạt trong phố, nội thất tiện nghi và khoang hành lý lớn.",
+          "isFeatured": false,
+          "displayOrder": 1,
+          "variants": [
+            { "name": "G", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "119 hp", "referencePrice": 499000000 },
+            { "name": "RS", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "119 hp", "referencePrice": 569000000 }
+          ],
+          "images": [
+            { "file": "honda-city-front", "alt": "Honda City nhìn từ phía trước", "cover": true },
+            { "file": "honda-city-side", "alt": "Honda City nhìn từ bên hông" }
+          ]
+        },
+        {
+          "name": "CR-V",
+          "slug": "cr-v",
+          "description": "SUV cỡ C bảy chỗ rộng rãi, động cơ tăng áp mạnh mẽ, phù hợp gia đình đông người và những chuyến đi xa.",
+          "isFeatured": true,
+          "displayOrder": 2,
+          "variants": [
+            { "name": "L", "bodyType": "SUV", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 7, "engine": "1.5L Turbo", "power": "188 hp", "referencePrice": 1109000000 }
+          ],
+          "images": [
+            { "file": "honda-cr-v-front", "alt": "Honda CR-V nhìn từ phía trước", "cover": true },
+            { "file": "honda-cr-v-side", "alt": "Honda CR-V nhìn từ bên hông" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Hyundai",
+      "slug": "hyundai",
+      "displayOrder": 3,
+      "carModels": [
+        {
+          "name": "Accent",
+          "slug": "accent",
+          "description": "Sedan hạng B giá dễ tiếp cận, nhiều trang bị trong tầm tiền, chi phí vận hành thấp, dễ bảo dưỡng.",
+          "isFeatured": false,
+          "displayOrder": 1,
+          "variants": [
+            { "name": "1.5 MT", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số sàn", "seats": 5, "engine": "1.5L", "power": "113 hp", "referencePrice": 439000000 },
+            { "name": "1.5 AT Đặc biệt", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "113 hp", "referencePrice": 529000000 }
+          ],
+          "images": [
+            { "file": "hyundai-accent-front", "alt": "Hyundai Accent nhìn từ phía trước", "cover": true },
+            { "file": "hyundai-accent-side", "alt": "Hyundai Accent nhìn từ bên hông" }
+          ]
+        },
+        {
+          "name": "Tucson",
+          "slug": "tucson",
+          "description": "SUV cỡ C thiết kế hiện đại, nhiều phiên bản động cơ, khoang lái công nghệ với màn hình kép và an toàn chủ động.",
+          "isFeatured": false,
+          "displayOrder": 2,
+          "variants": [
+            { "name": "2.0 Xăng Tiêu chuẩn", "bodyType": "SUV", "fuel": "Xăng", "transmission": "Số tự động", "seats": 5, "engine": "2.0L", "power": "156 hp", "referencePrice": 769000000 },
+            { "name": "1.6 Turbo HTRAC", "bodyType": "SUV", "fuel": "Xăng", "transmission": "Ly hợp kép", "seats": 5, "engine": "1.6L Turbo", "power": "180 hp", "referencePrice": 989000000 }
+          ],
+          "images": [
+            { "file": "hyundai-tucson-front", "alt": "Hyundai Tucson nhìn từ phía trước", "cover": true },
+            { "file": "hyundai-tucson-side", "alt": "Hyundai Tucson nhìn từ bên hông" }
+          ]
+        }
+      ]
+    }
+  ]
+}

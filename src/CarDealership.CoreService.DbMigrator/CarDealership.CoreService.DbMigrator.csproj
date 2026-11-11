@@ -32,6 +32,16 @@
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Autofac" Version="10.7.0" />
     <ProjectReference Include="..\CarDealership.CoreService.Application.Contracts\CarDealership.CoreService.Application.Contracts.csproj" />
+    <!-- Seed catalog demo upload ảnh qua IImageStorage; cài đặt S3ImageStorage nằm ở Application. -->
+    <ProjectReference Include="..\CarDealership.CoreService.Application\CarDealership.CoreService.Application.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Dữ liệu seed demo (catalog.json + ảnh WebP đã xử lý) đi kèm DbMigrator, đọc từ seed/demo cạnh file chạy. -->
+    <Content Include="..\..\seed\demo\**\*">
+      <Link>seed\demo\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <ProjectReference Include="..\CarDealership.CoreService.EntityFrameworkCore\CarDealership.CoreService.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
