@@ -63,7 +63,7 @@ public class CatalogPublishingTests : CatalogTestBase
             () => CarModels.ChangeStatusAsync(model.Id, new ChangeCatalogStatusInput { Status = CatalogStatus.Published })));
 
         ex.Code.ShouldBe(CatalogErrorCodes.PublishValidationFailed);
-        ((string[])ex.Data["violations"]!).Length.ShouldBe(3);
+        ((Dictionary<string, object>[])ex.Data["rules"]!).Length.ShouldBe(3);
         (await AsAdminAsync(() => CarModels.GetAsync(model.Id))).Status.ShouldBe(CatalogStatus.Draft);
         (await AuditEntriesAsync(model.Id.ToString())).ShouldAllBe(e => e.Action != AuditActions.ChangeStatus);
     }
@@ -135,7 +135,7 @@ public class CatalogPublishingTests : CatalogTestBase
             brand.Id, new ChangeBrandStatusInput { Status = BrandStatus.Inactive })));
 
         ex.Code.ShouldBe(CatalogErrorCodes.BrandHasPublishedCarModels);
-        var listed = ((Dictionary<string, string>[])ex.Data["carModels"]!).Select(c => (c["name"], c["slug"])).ToList();
+        var listed = ((Dictionary<string, string>[])ex.Data["items"]!).Select(c => (c["name"], c["slug"])).ToList();
         listed.ShouldBe(new[] { ("Camry", "camry"), ("Vios", "vios") });
         (await AsAdminAsync(() => Brands.GetAsync(brand.Id))).Status.ShouldBe(BrandStatus.Active);
     }
