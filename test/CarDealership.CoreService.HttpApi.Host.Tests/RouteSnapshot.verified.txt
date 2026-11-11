@@ -7,6 +7,8 @@
 # /health/live vẫn là middleware (app.UseHealthChecks) nên không nằm ở đây: được miễn Edge key và JWT.
 # Thêm controller mới => test đỏ cho tới khi route xuất hiện ở file này (cập nhật có chủ đích).
 # P2 Catalog (Ngày 61-84): Brand, CarModel, CarVariant (lồng dưới CarModel), transitions, publish-check, public.
+# Ngày 88: POST /api/catalog/car-models/{carModelId}/images (upload ảnh, VehicleImageController).
+# Ngày 90: PUT …/images/order, PUT và DELETE …/images/{imageId}.
 /api/app/auth/sessions
 /api/app/auth/sessions/current
 /api/app/auth/sessions/refresh
@@ -15,6 +17,9 @@
 /api/catalog/brands/{id:guid}
 /api/catalog/brands/{id:guid}/status
 /api/catalog/car-models
+/api/catalog/car-models/{carModelId:guid}/images
+/api/catalog/car-models/{carModelId:guid}/images/{imageId:guid}
+/api/catalog/car-models/{carModelId:guid}/images/order
 /api/catalog/car-models/{carModelId:guid}/variants
 /api/catalog/car-models/{carModelId:guid}/variants/{variantId:guid}
 /api/catalog/car-models/{carModelId:guid}/variants/{variantId:guid}/transitions

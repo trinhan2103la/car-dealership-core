@@ -42,6 +42,9 @@ public class VehicleImage : Entity<Guid>
 
     internal void SetDisplayOrder(int displayOrder) => DisplayOrder = displayOrder;
 
+    /// <summary>Alt đã trim, độ dài do <see cref="CarModel.UpdateImageAlt"/> kiểm.</summary>
+    internal void SetAlt(string alt) => Alt = alt;
+
     /// <summary>Alt hợp lệ để xuất bản: sau khi trim dài 5–150 ký tự.</summary>
     public bool HasPublishableAlt()
     {

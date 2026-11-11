@@ -1390,6 +1390,259 @@
           }
         }
       }
+    },
+    "/api/catalog/car-models/{carModelId}/images": {
+      "post": {
+        "tags": [
+          "VehicleImage"
+        ],
+        "parameters": [
+          {
+            "name": "carModelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Sm": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Md": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Lg": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Alt": {
+                    "type": "string"
+                  },
+                  "CarVariantId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              },
+              "encoding": {
+                "Sm": {
+                  "style": "form"
+                },
+                "Md": {
+                  "style": "form"
+                },
+                "Lg": {
+                  "style": "form"
+                },
+                "Alt": {
+                  "style": "form"
+                },
+                "CarVariantId": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/car-models/{carModelId}/images/order": {
+      "put": {
+        "tags": [
+          "VehicleImage"
+        ],
+        "parameters": [
+          {
+            "name": "carModelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.Images.ReorderImagesInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.Images.ReorderImagesInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.Images.ReorderImagesInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/catalog/car-models/{carModelId}/images/{imageId}": {
+      "put": {
+        "tags": [
+          "VehicleImage"
+        ],
+        "parameters": [
+          {
+            "name": "carModelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "imageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.Images.UpdateImageInput"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.Images.UpdateImageInput"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.Images.UpdateImageInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarDealership.CoreService.Catalog.CarModels.VehicleImageDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "VehicleImage"
+        ],
+        "parameters": [
+          {
+            "name": "carModelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "imageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1910,6 +2163,35 @@
         ],
         "type": "string"
       },
+      "CarDealership.CoreService.Catalog.Images.ReorderImagesInput": {
+        "type": "object",
+        "properties": {
+          "imageIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
+          "coverImageId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CarDealership.CoreService.Catalog.Images.UpdateImageInput": {
+        "type": "object",
+        "properties": {
+          "alt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CarDealership.CoreService.Catalog.Public.PublicBrandDto": {
         "type": "object",
         "properties": {
@@ -2418,6 +2700,9 @@
     },
     {
       "name": "Session"
+    },
+    {
+      "name": "VehicleImage"
     }
   ]
 }

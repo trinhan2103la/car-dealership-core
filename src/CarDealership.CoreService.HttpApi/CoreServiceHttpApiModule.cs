@@ -40,6 +40,7 @@ public class CoreServiceHttpApiModule : AbpModule
             options.Map(CatalogErrorCodes.BrandHasPublishedCarModels, HttpStatusCode.UnprocessableEntity);
             options.Map(CatalogErrorCodes.CarModelArchived, HttpStatusCode.UnprocessableEntity);
             options.Map(CatalogErrorCodes.ImageLimitReached, HttpStatusCode.UnprocessableEntity);
+            options.Map(CatalogErrorCodes.StorageUnavailable, HttpStatusCode.ServiceUnavailable);
         });
     }
 
