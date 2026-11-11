@@ -323,6 +323,13 @@ public class CarModel : AuditedAggregateRoot<Guid>
         {
             errors.Add("alt", $"Alt dài tối đa {CatalogConsts.ImageAltMaxLength} ký tự.");
         }
+        else if (Status == CatalogStatus.Published && trimmedAlt.Length < CatalogConsts.ImageAltMinLength)
+        {
+            // Req 10.10: model Published phải luôn thỏa Publish_Validation, nên ảnh mới phải có alt 5–150.
+            // Kiểm TRƯỚC khi thêm (không dựa vào rollback); tìm ra bởi PublishValidationProperties.
+            throw CatalogExceptions.PublishValidationFailed(
+                new PublishValidationResult(new[] { PublishRuleCodes.ImageAlt }, Array.Empty<Guid>()));
+        }
 
         if (carVariantId is { } variantId && _variants.All(v => v.Id != variantId))
         {

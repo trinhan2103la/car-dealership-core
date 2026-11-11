@@ -412,6 +412,24 @@ public class CarModelTests
         ex.ValidationErrors.SelectMany(e => e.MemberNames).ShouldBe(new[] { "alt" });
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("abc ")]
+    public void Adding_an_image_without_a_publishable_alt_to_a_published_model_is_rejected(string? alt)
+    {
+        var model = PublishableModel();
+        model.ChangeStatus(CatalogStatus.Published, BrandStatus.Active, Now);
+        var before = model.Images.Count;
+
+        var ex = Should.Throw<BusinessException>(() => model.AddImage(Guid.NewGuid(), "k-new", alt));
+
+        ex.Code.ShouldBe(CatalogErrorCodes.PublishValidationFailed);
+        RuleCodes(ex).ShouldBe(new[] { PublishRuleCodes.ImageAlt });
+        model.Images.Count.ShouldBe(before);
+        model.AddImage(Guid.NewGuid(), "k-ok", "Ảnh nội thất").Alt.ShouldBe("Ảnh nội thất");
+    }
+
     [Fact]
     public void Short_alt_on_a_published_model_is_rejected()
     {
