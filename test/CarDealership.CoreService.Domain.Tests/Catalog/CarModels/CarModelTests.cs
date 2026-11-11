@@ -22,6 +22,11 @@ public class CarModelTests
         string? engine = "1.5L", string? power = "106 hp", int? seats = 5) =>
         new(name, "Sedan", "Xăng", "Số tự động", seats, engine, power, contact ? null : price, contact, null);
 
+    private static System.Collections.Generic.Dictionary<string, object>[] Rules(BusinessException ex) =>
+        (System.Collections.Generic.Dictionary<string, object>[])ex.Data["rules"]!;
+
+    private static string[] RuleCodes(BusinessException ex) => Rules(ex).Select(r => (string)r["code"]).ToArray();
+
     private static CarModel PublishableModel()
     {
         var model = NewModel();
@@ -113,7 +118,8 @@ public class CarModelTests
         var ex = Should.Throw<BusinessException>(() => model.ChangeStatus(CatalogStatus.Published, BrandStatus.Inactive, Now));
 
         ex.Code.ShouldBe(CatalogErrorCodes.PublishValidationFailed);
-        ((string[])ex.Data["violations"]!).ShouldBe(PublishValidator.CarModelRuleCodes, ignoreOrder: true);
+        RuleCodes(ex).ShouldBe(PublishValidator.CarModelRuleCodes, ignoreOrder: true);
+        Rules(ex).ShouldAllBe(r => (bool)r["passed"] == false && ((string)r["message"]).Length > 0);
         model.Status.ShouldBe(CatalogStatus.Draft);
         model.PublishedAt.ShouldBeNull();
     }
@@ -167,7 +173,7 @@ public class CarModelTests
 
         var ex = Should.Throw<BusinessException>(() => model.ChangeVariantStatus(variant.Id, CatalogStatus.Published));
 
-        ((string[])ex.Data["violations"]!).ShouldBe(new[] { PublishRuleCodes.KeySpecComplete });
+        RuleCodes(ex).ShouldBe(new[] { PublishRuleCodes.KeySpecComplete });
         variant.Status.ShouldBe(CatalogStatus.Draft);
     }
 
@@ -179,7 +185,7 @@ public class CarModelTests
         var ex = Should.Throw<BusinessException>(() => model.ChangeStatus(CatalogStatus.Hidden, BrandStatus.Active, Now));
 
         ex.Code.ShouldBe(CatalogErrorCodes.InvalidTransition);
-        ex.Data["currentStatus"].ShouldBe("Draft");
+        ex.Data["currentState"].ShouldBe("Draft");
         ((string[])ex.Data["allowedTargets"]!).ShouldBe(new[] { "Published", "Archived" });
     }
 
@@ -302,5 +308,137 @@ public class CarModelTests
         model.SetCover(b.Id);
         model.Images.Count(i => i.IsCover).ShouldBe(1);
         b.IsCover.ShouldBeTrue();
+    }
+
+    // ---------------------------------------------------------------- sắp xếp, alt, xóa ảnh (Ngày 90)
+
+    private static (CarModel Model, VehicleImage A, VehicleImage B, VehicleImage C) ModelWithThreeImages()
+    {
+        var model = NewModel();
+        var a = model.AddImage(Guid.NewGuid(), "a", "Ảnh xe A");
+        var b = model.AddImage(Guid.NewGuid(), "b", "Ảnh xe B");
+        var c = model.AddImage(Guid.NewGuid(), "c", "Ảnh xe C");
+        return (model, a, b, c);
+    }
+
+    [Fact]
+    public void Reorder_sets_contiguous_order_in_the_given_sequence()
+    {
+        var (model, a, b, c) = ModelWithThreeImages();
+
+        model.ReorderImages(new[] { c.Id, a.Id, b.Id });
+
+        c.DisplayOrder.ShouldBe(0);
+        a.DisplayOrder.ShouldBe(1);
+        b.DisplayOrder.ShouldBe(2);
+    }
+
+    public static TheoryData<string> BadOrders => new() { "missing", "duplicate", "unknown" };
+
+    [Theory]
+    [MemberData(nameof(BadOrders))]
+    public void Reorder_rejects_missing_duplicate_or_unknown_ids(string kind)
+    {
+        var (model, a, b, c) = ModelWithThreeImages();
+        Guid[] ids = kind switch
+        {
+            "missing" => new[] { a.Id, b.Id },
+            "duplicate" => new[] { a.Id, b.Id, b.Id },
+            _ => new[] { a.Id, b.Id, Guid.NewGuid() },
+        };
+
+        var ex = Should.Throw<AbpValidationException>(() => model.ReorderImages(ids));
+
+        ex.ValidationErrors.SelectMany(e => e.MemberNames).ShouldBe(new[] { "imageIds" });
+        new[] { a.DisplayOrder, b.DisplayOrder, c.DisplayOrder }.ShouldBe(new[] { 0, 1, 2 });
+    }
+
+    [Fact]
+    public void Removing_an_image_keeps_order_contiguous()
+    {
+        var model = NewModel();
+        var images = Enumerable.Range(0, 4).Select(i => model.AddImage(Guid.NewGuid(), $"k{i}", "Ảnh xe đẹp")).ToList();
+
+        model.RemoveImage(images[1].Id, BrandStatus.Active);
+
+        model.Images.Count.ShouldBe(3);
+        model.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Id)
+            .ShouldBe(new[] { images[0].Id, images[2].Id, images[3].Id });
+        model.Images.Select(i => i.DisplayOrder).OrderBy(o => o).ShouldBe(new[] { 0, 1, 2 });
+    }
+
+    [Fact]
+    public void Removing_the_cover_of_a_draft_model_leaves_no_cover()
+    {
+        var model = NewModel();
+        var cover = model.AddImage(Guid.NewGuid(), "a", "Ảnh xe A");
+        model.AddImage(Guid.NewGuid(), "b", "Ảnh xe B");
+        model.SetCover(cover.Id);
+
+        model.RemoveImage(cover.Id, BrandStatus.Active);
+
+        model.Images.Any(i => i.IsCover).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Removing_the_cover_of_a_published_model_is_rejected()
+    {
+        var model = PublishableModel();
+        model.ChangeStatus(CatalogStatus.Published, BrandStatus.Active, Now);
+        var cover = model.Images.Single(i => i.IsCover);
+
+        var ex = Should.Throw<BusinessException>(() => model.RemoveImage(cover.Id, BrandStatus.Active));
+
+        ex.Code.ShouldBe(CatalogErrorCodes.PublishValidationFailed);
+    }
+
+    [Fact]
+    public void Removing_an_unknown_image_is_not_found()
+    {
+        Should.Throw<Volo.Abp.Domain.Entities.EntityNotFoundException>(() =>
+            NewModel().RemoveImage(Guid.NewGuid(), BrandStatus.Active));
+    }
+
+    [Fact]
+    public void Alt_is_trimmed_and_limited_to_150()
+    {
+        var (model, a, _, _) = ModelWithThreeImages();
+
+        model.UpdateImageAlt(a.Id, "  Ảnh nội thất  ", BrandStatus.Active);
+        a.Alt.ShouldBe("Ảnh nội thất");
+
+        var ex = Should.Throw<AbpValidationException>(() =>
+            model.UpdateImageAlt(a.Id, new string('a', 151), BrandStatus.Active));
+        ex.ValidationErrors.SelectMany(e => e.MemberNames).ShouldBe(new[] { "alt" });
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("abc ")]
+    public void Adding_an_image_without_a_publishable_alt_to_a_published_model_is_rejected(string? alt)
+    {
+        var model = PublishableModel();
+        model.ChangeStatus(CatalogStatus.Published, BrandStatus.Active, Now);
+        var before = model.Images.Count;
+
+        var ex = Should.Throw<BusinessException>(() => model.AddImage(Guid.NewGuid(), "k-new", alt));
+
+        ex.Code.ShouldBe(CatalogErrorCodes.PublishValidationFailed);
+        RuleCodes(ex).ShouldBe(new[] { PublishRuleCodes.ImageAlt });
+        model.Images.Count.ShouldBe(before);
+        model.AddImage(Guid.NewGuid(), "k-ok", "Ảnh nội thất").Alt.ShouldBe("Ảnh nội thất");
+    }
+
+    [Fact]
+    public void Short_alt_on_a_published_model_is_rejected()
+    {
+        var model = PublishableModel();
+        model.ChangeStatus(CatalogStatus.Published, BrandStatus.Active, Now);
+        var cover = model.Images.Single(i => i.IsCover);
+
+        var ex = Should.Throw<BusinessException>(() => model.UpdateImageAlt(cover.Id, "abc", BrandStatus.Active));
+
+        ex.Code.ShouldBe(CatalogErrorCodes.PublishValidationFailed);
     }
 }

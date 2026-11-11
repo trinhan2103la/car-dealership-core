@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CarDealership.CoreService.Audit;
 using CarDealership.CoreService.Catalog.Brands;
 using CarDealership.CoreService.Catalog.CarModels;
+using CarDealership.CoreService.Catalog.Images;
 using CarDealership.CoreService.EntityFrameworkCore;
 using CarDealership.CoreService.Catalog;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +39,40 @@ public class CoreServiceCatalogTestModule : AbpModule
         context.Services.AddSingleton<AuditFaultSwitch>();
         context.Services.Replace(ServiceDescriptor.Transient<IAuditTrail>(sp =>
             new SwitchableAuditTrail(sp.GetRequiredService<AuditTrail>(), sp.GetRequiredService<AuditFaultSwitch>())));
+
+        // IImageStorage do test chọn (S3Mock, storage chết...). Test không đụng storage thì không bao giờ resolve nó.
+        context.Services.AddSingleton<ImageStorageSwitch>();
+        context.Services.Replace(ServiceDescriptor.Transient<IImageStorage>(sp =>
+            sp.GetRequiredService<ImageStorageSwitch>().Get()));
+    }
+}
+
+/// <summary>
+/// Công tắc cho test: IImageStorage mà VehicleImageAppService sẽ nhận. Dùng method thay vì property public kiểu IImageStorage,
+/// vì ABP bật property injection của Autofac: property đó sẽ bị inject chính factory ở trên → đệ quy vô hạn.
+/// </summary>
+public class ImageStorageSwitch
+{
+    private IImageStorage? _current;
+
+    public void Use(IImageStorage storage) => _current = storage;
+
+    /// <summary>Chưa chọn storage: vẫn resolve được (app service nhận qua constructor), chỉ lỗi khi thật sự dùng tới.</summary>
+    public IImageStorage Get() => _current ?? NotConfiguredImageStorage.Instance;
+
+    private sealed class NotConfiguredImageStorage : IImageStorage
+    {
+        public static readonly NotConfiguredImageStorage Instance = new();
+
+        private static InvalidOperationException Missing() =>
+            new("Test chưa gọi ImageStorageSwitch.Use(...) mà lại đụng tới Object_Storage.");
+
+        public Task PutAsync(string key, System.IO.Stream content, string contentType, System.Threading.CancellationToken cancellationToken = default) =>
+            throw Missing();
+
+        public Task DeleteAsync(string key, System.Threading.CancellationToken cancellationToken = default) => throw Missing();
+
+        public Task<bool> ExistsAsync(string key, System.Threading.CancellationToken cancellationToken = default) => throw Missing();
     }
 }
 

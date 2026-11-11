@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <!-- Property-based test (design: Testing Strategy, Property 1/3/10/13). Phiên bản pin chính xác. -->
+    <PackageReference Include="FsCheck" Version="3.6.0" />
   </ItemGroup>
 
   <ItemGroup>

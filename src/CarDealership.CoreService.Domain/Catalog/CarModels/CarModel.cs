@@ -323,6 +323,13 @@ public class CarModel : AuditedAggregateRoot<Guid>
         {
             errors.Add("alt", $"Alt dài tối đa {CatalogConsts.ImageAltMaxLength} ký tự.");
         }
+        else if (Status == CatalogStatus.Published && trimmedAlt.Length < CatalogConsts.ImageAltMinLength)
+        {
+            // Req 10.10: model Published phải luôn thỏa Publish_Validation, nên ảnh mới phải có alt 5–150.
+            // Kiểm TRƯỚC khi thêm (không dựa vào rollback); tìm ra bởi PublishValidationProperties.
+            throw CatalogExceptions.PublishValidationFailed(
+                new PublishValidationResult(new[] { PublishRuleCodes.ImageAlt }, Array.Empty<Guid>()));
+        }
 
         if (carVariantId is { } variantId && _variants.All(v => v.Id != variantId))
         {
@@ -362,6 +369,52 @@ public class CarModel : AuditedAggregateRoot<Guid>
         }
 
         image.SetCover(true);
+    }
+
+    /// <summary>Đặt lại thứ tự: danh sách phải chứa ĐỦ và ĐÚNG các ảnh của model; thứ tự mới 0..n-1 liên tục (Req 9.6).</summary>
+    public void ReorderImages(IReadOnlyList<Guid> orderedIds)
+    {
+        if (orderedIds.Count != _images.Count
+            || orderedIds.Distinct().Count() != orderedIds.Count
+            || orderedIds.Any(id => _images.All(i => i.Id != id)))
+        {
+            new FieldErrors().Add("imageIds", "Danh sách phải gồm đủ mọi ảnh của mẫu xe, không trùng.").ThrowIfAny();
+        }
+
+        for (var i = 0; i < orderedIds.Count; i++)
+        {
+            GetImage(orderedIds[i]).SetDisplayOrder(i);
+        }
+    }
+
+    /// <summary>Sửa alt. Model Published mà alt mới &lt; 5 ký tự → 422 (Req 10.10).</summary>
+    public VehicleImage UpdateImageAlt(Guid imageId, string? alt, BrandStatus brandStatus)
+    {
+        var image = GetImage(imageId);
+        var trimmed = alt?.Trim() ?? string.Empty;
+        if (trimmed.Length > CatalogConsts.ImageAltMaxLength)
+        {
+            new FieldErrors().Add("alt", $"Alt dài tối đa {CatalogConsts.ImageAltMaxLength} ký tự.").ThrowIfAny();
+        }
+
+        image.SetAlt(trimmed);
+        RevalidateIfPublished(brandStatus);
+        return image;
+    }
+
+    /// <summary>Gỡ ảnh, đánh lại thứ tự liên tục. Model Published mà làm mất điều kiện xuất bản → 422 (phương án a).</summary>
+    public VehicleImage RemoveImage(Guid imageId, BrandStatus brandStatus)
+    {
+        var image = GetImage(imageId);
+        _images.Remove(image);
+        var order = 0;
+        foreach (var remaining in _images.OrderBy(i => i.DisplayOrder))
+        {
+            remaining.SetDisplayOrder(order++);
+        }
+
+        RevalidateIfPublished(brandStatus);
+        return image;
     }
 
     // ---------------------------------------------------------------- dẫn xuất

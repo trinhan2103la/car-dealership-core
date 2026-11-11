@@ -32,6 +32,10 @@ public class CoreServiceEntityFrameworkCoreTestModule : AbpModule
         });
         context.Services.AddAlwaysDisableUnitOfWorkTransaction();
 
+        // Seed catalog demo KHÔNG chạy lúc khởi tạo test, kể cả khi máy dev có đặt SEED_ENVIRONMENT.
+        // CatalogSeedTests gọi contributor trực tiếp với options riêng.
+        Configure<CarDealership.CoreService.Catalog.Seed.CatalogDemoSeedOptions>(options => options.Environment = null);
+
         // Trỏ vào container Testcontainers. Ghi đè cả biến môi trường ConnectionStrings__Default
         // (CI đặt biến này cho Host.Tests), vì Configure của module này chạy sau ABP.
         // UseNpgsql() đã có sẵn ở CoreServiceEntityFrameworkCoreModule.

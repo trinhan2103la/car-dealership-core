@@ -14,6 +14,7 @@ mkdir -p "$(dirname "$OUT")"
 
 export ASPNETCORE_ENVIRONMENT=Development
 export EDGE_KEY="openapi-export-throwaway-edge-key-0000"
+export STRING_ENCRYPTION_PASSPHRASE="openapi-export-throwaway-passphrase"
 SERVICE_JWT_PUBLIC_KEY="$(openssl ecparam -name prime256v1 -genkey -noout | openssl ec -pubout -outform DER 2>/dev/null | base64 -w0)"
 export SERVICE_JWT_PUBLIC_KEY
 
