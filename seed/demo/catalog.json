@@ -18,8 +18,8 @@
             { "name": "1.5G CVT", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "106 hp", "referencePrice": 545000000 }
           ],
           "images": [
-            { "file": "toyota-vios-front", "alt": "Toyota Vios nhìn từ phía trước", "cover": true },
-            { "file": "toyota-vios-side", "alt": "Toyota Vios nhìn từ bên hông" }
+            { "file": "toyota-vios-front", "alt": "Toyota Vios màu đỏ, nhìn chéo phía trước", "cover": true },
+            { "file": "toyota-vios-side", "alt": "Toyota Vios màu đen, nhìn chéo phía trước bên phải" }
           ]
         },
         {
@@ -33,8 +33,8 @@
             { "name": "1.8HEV", "bodyType": "SUV", "fuel": "Hybrid", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.8L Hybrid", "power": "121 hp", "contactForPrice": true }
           ],
           "images": [
-            { "file": "toyota-corolla-cross-front", "alt": "Toyota Corolla Cross nhìn từ phía trước", "cover": true },
-            { "file": "toyota-corolla-cross-side", "alt": "Toyota Corolla Cross nhìn từ bên hông" }
+            { "file": "toyota-corolla-cross-front", "alt": "Toyota Corolla Cross màu bạc, nhìn chéo phía trước", "cover": true },
+            { "file": "toyota-corolla-cross-side", "alt": "Toyota Corolla Cross màu trắng, nhìn chéo phía trước bên trái" }
           ]
         }
       ]
@@ -55,8 +55,8 @@
             { "name": "RS", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "119 hp", "referencePrice": 569000000 }
           ],
           "images": [
-            { "file": "honda-city-front", "alt": "Honda City nhìn từ phía trước", "cover": true },
-            { "file": "honda-city-side", "alt": "Honda City nhìn từ bên hông" }
+            { "file": "honda-city-front", "alt": "Honda City màu đỏ, nhìn chéo phía trước", "cover": true },
+            { "file": "honda-city-side", "alt": "Honda City RS màu trắng, nhìn chéo phía trước bên phải" }
           ]
         },
         {
@@ -69,8 +69,8 @@
             { "name": "L", "bodyType": "SUV", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 7, "engine": "1.5L Turbo", "power": "188 hp", "referencePrice": 1109000000 }
           ],
           "images": [
-            { "file": "honda-cr-v-front", "alt": "Honda CR-V nhìn từ phía trước", "cover": true },
-            { "file": "honda-cr-v-side", "alt": "Honda CR-V nhìn từ bên hông" }
+            { "file": "honda-cr-v-front", "alt": "Honda CR-V màu đen, nhìn chéo phía trước", "cover": true },
+            { "file": "honda-cr-v-side", "alt": "Honda CR-V màu trắng, nhìn chéo phía trước bên trái" }
           ]
         }
       ]
@@ -91,8 +91,8 @@
             { "name": "1.5 AT Đặc biệt", "bodyType": "Sedan", "fuel": "Xăng", "transmission": "Số tự động vô cấp", "seats": 5, "engine": "1.5L", "power": "113 hp", "referencePrice": 529000000 }
           ],
           "images": [
-            { "file": "hyundai-accent-front", "alt": "Hyundai Accent nhìn từ phía trước", "cover": true },
-            { "file": "hyundai-accent-side", "alt": "Hyundai Accent nhìn từ bên hông" }
+            { "file": "hyundai-accent-front", "alt": "Hyundai Accent màu xanh xám, nhìn chéo phía trước", "cover": true },
+            { "file": "hyundai-accent-side", "alt": "Hyundai Accent màu xám, nhìn từ bên hông" }
           ]
         },
         {
@@ -106,8 +106,8 @@
             { "name": "1.6 Turbo HTRAC", "bodyType": "SUV", "fuel": "Xăng", "transmission": "Ly hợp kép", "seats": 5, "engine": "1.6L Turbo", "power": "180 hp", "referencePrice": 989000000 }
           ],
           "images": [
-            { "file": "hyundai-tucson-front", "alt": "Hyundai Tucson nhìn từ phía trước", "cover": true },
-            { "file": "hyundai-tucson-side", "alt": "Hyundai Tucson nhìn từ bên hông" }
+            { "file": "hyundai-tucson-front", "alt": "Hyundai Tucson màu trắng, nhìn chéo phía trước", "cover": true },
+            { "file": "hyundai-tucson-side", "alt": "Hyundai Tucson màu bạc, nhìn chéo phía trước bên phải" }
           ]
         }
       ]

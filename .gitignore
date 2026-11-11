@@ -286,3 +286,6 @@ src/CarDealership.CoreService.Blazor.Server.Tiered/Logs/*
 
 # Log files sinh khi chạy (DbMigrator, Host...)
 Logs/
+
+# Ảnh gốc của seed demo (tải lại theo seed/demo/images/manifest.json); chỉ commit WebP đã xử lý.
+seed/demo/source-images/
